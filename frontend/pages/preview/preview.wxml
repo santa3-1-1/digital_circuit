@@ -1,0 +1,11 @@
+<view class="page">
+  <text class="title">📘 预习模块</text>
+  <block wx:for="{{topics}}" wx:key="id">
+    <view class="card">
+      <text class="topic-title">{{item.title}}</text>
+      <text class="topic-content">{{item.content}}</text>
+    </view>
+  </block>
+
+  <button class="go-btn" bindtap="goPractice">进入练习模块 🧠</button>
+</view>

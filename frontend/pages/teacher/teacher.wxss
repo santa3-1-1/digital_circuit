@@ -1,0 +1,29 @@
+.page {
+  padding: 30rpx;
+}
+
+.title {
+  font-size: 40rpx;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.card {
+  background-color: #f5f5f5;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 8rpx rgba(0,0,0,0.1);
+}
+
+.name {
+  font-weight: bold;
+  font-size: 34rpx;
+}
+
+.info {
+  display: block;
+  color: #555;
+  font-size: 30rpx;
+}

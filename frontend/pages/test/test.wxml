@@ -1,0 +1,20 @@
+<view class="page">
+  <text class="title">🕒 模拟测试</text>
+
+  <view wx:if="{{!isFinished}}">
+    <text class="timer">剩余时间：{{timeLeft}} 秒</text>
+    <text class="question">{{questions[currentIndex].question}}</text>
+
+    <view class="options">
+      <block wx:for="{{questions[currentIndex].options}}" wx:key="*this">
+        <button bindtap="selectOption" data-option="{{item}}">
+          {{item}}
+        </button>
+      </block>
+    </view>
+  </view>
+
+  <view wx:if="{{isFinished}}">
+    <text class="result">🎯 测试完成！得分：{{score}} / {{questions.length}}</text>
+  </view>
+</view>

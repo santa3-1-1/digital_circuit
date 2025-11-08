@@ -1,0 +1,11 @@
+<view class="page">
+  <text class="title">👩‍🏫 学生成绩总览</text>
+
+  <block wx:for="{{stats}}" wx:key="username">
+    <view class="card">
+      <text class="name">{{item.username}}</text>
+      <text class="info">答题数：{{item.total}}</text>
+      <text class="info">正确率：{{item.accuracy || 0}}%</text>
+    </view>
+  </block>
+</view>

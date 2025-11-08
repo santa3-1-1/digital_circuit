@@ -1,0 +1,14 @@
+<view class="page">
+  <text class="title">📊 学习进度统计</text>
+
+  <view class="card">
+    <text class="item">总答题数：{{total}}</text>
+    <text class="item">正确次数：{{correct}}</text>
+    <text class="item">错误次数：{{wrong}}</text>
+    <text class="item">正确率：{{accuracy}}%</text>
+  </view>
+
+  <view wx:if="{{total === 0}}">
+    <text class="note">你还没有开始答题哦～</text>
+  </view>
+</view>

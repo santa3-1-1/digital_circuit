@@ -1,0 +1,37 @@
+.page {
+  padding: 30rpx;
+}
+.title {
+  font-size: 42rpx;
+  font-weight: bold;
+  margin-bottom: 30rpx;
+}
+.card {
+  background-color: #f9f9f9;
+  padding: 25rpx;
+  margin-bottom: 40rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+.question {
+  font-size: 32rpx;
+  margin-bottom: 20rpx;
+  display: block;
+}
+.option {
+  background-color: #e6f7ff;
+  border: none;
+  margin-bottom: 15rpx;
+  padding: 20rpx;
+  border-radius: 15rpx;
+  font-size: 30rpx;
+}
+.option:hover {
+  background-color: #bae7ff;
+}
+.result {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-top: 20rpx;
+  text-align: center;
+}
