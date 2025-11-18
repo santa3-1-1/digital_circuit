@@ -108,43 +108,33 @@ app.post('/api/login', (req, res) => {
 
 // ===== 微信一键登录 =====
 app.post('/api/wxlogin', async (req, res) => {
+  const { code, encryptedData, iv } = req.body;
+
   try {
-    const { code } = req.body;
-    if (!code) return res.status(400).json({ error: '缺少 code' });
+    // 调用微信接口换取 openid
+    const sessionData = await getSessionFromWeixin(code); // 你已有的函数
+    const openid = sessionData.openid;
 
-    const appid = process.env.WX_APPID;
-    const secret = process.env.WX_SECRET;
-    if (!appid || !secret) return res.status(500).json({ error: '服务器未配置微信 AppID/SECRET' });
+    // 查询用户
+    let user = await db.get('SELECT * FROM users WHERE openid = ?', [openid]);
 
-    const url = 'https://api.weixin.qq.com/sns/jscode2session';
-    const params = { appid, secret, js_code: code, grant_type: 'authorization_code' };
-    const wechatResp = await axios.get(url, { params, timeout: 10000 });
-    const data = wechatResp.data;
+    if (!user) {
+      // 自动注册游客账号
+      const username = `游客_${Date.now()}`;
+      const role = 'student'; // 默认角色，可根据需求改
+      const result = await db.run(
+        'INSERT INTO users (username, role, openid) VALUES (?, ?, ?)',
+        [username, role, openid]
+      );
+      user = await db.get('SELECT * FROM users WHERE id = ?', [result.lastID]);
+    }
 
-    if (data.errcode) return res.status(500).json({ error: '微信换取 openid 失败', detail: data });
-
-    const openid = data.openid;
-    if (!openid) return res.status(500).json({ error: '未获得 openid', detail: data });
-
-    db.get('SELECT * FROM users WHERE openid = ?', [openid], (err, user) => {
-      if (err) return res.status(500).json({ error: '数据库查询错误' });
-
-      if (user) return res.json({ id: user.id, username: user.username, role: user.role, openid });
-
-      const username = 'wx_' + openid.slice(0, 8);
-      const password = '';
-      const role = 'student';
-
-      db.run(`INSERT INTO users (username, password, role, openid) VALUES (?, ?, ?, ?)`, [username, password, role, openid], function (insertErr) {
-        if (insertErr) return res.status(500).json({ error: '创建用户失败' });
-        res.json({ id: this.lastID, username, role, openid });
-      });
-    });
-  } catch (e) {
-    return res.status(500).json({ error: '服务器内部错误', detail: e.message || e });
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '服务器错误' });
   }
 });
-
 // ===== 教师查看学生答题统计 =====
 app.get('/api/user-stats', (req, res) => {
   const { role } = req.query;
@@ -170,7 +160,4 @@ app.get('/api/user-stats', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running with SQLite at http://localhost:${PORT}`);
-  console.log('WX_APPID:', process.env.WX_APPID);
-console.log('WX_SECRET:', process.env.WX_SECRET);
-
 });
