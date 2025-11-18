@@ -170,4 +170,7 @@ app.get('/api/user-stats', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running with SQLite at http://localhost:${PORT}`);
+  console.log('WX_APPID:', process.env.WX_APPID);
+console.log('WX_SECRET:', process.env.WX_SECRET);
+
 });
