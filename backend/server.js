@@ -167,10 +167,29 @@ app.get('/api/user-stats', (req, res) => {
   });
 });
 
+
+// 微信接口换取 session_key 和 openid
+async function getSessionFromWeixin(code) {
+  const appid = 'wx152d55febb831e42';      // 替换成你自己的
+  const secret = 'c1638bc056f33cb02c19b75a85198975';  // 替换成你自己的
+  const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
+
+  try {
+    const resp = await axios.get(url);
+    if (resp.data.errcode) {
+      console.error('微信接口错误:', resp.data);
+      throw new Error(`微信接口返回错误: ${resp.data.errmsg}`);
+    }
+    return resp.data; // { openid, session_key, unionid? }
+  } catch (err) {
+    console.error('getSessionFromWeixin异常:', err);
+    throw err;
+  }
+}
+
+
 // ===== 启动服务 =====
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running with SQLite at http://localhost:${PORT}`);
 });
-
-
