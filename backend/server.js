@@ -108,33 +108,44 @@ app.post('/api/login', (req, res) => {
 
 // ===== 微信一键登录 =====
 app.post('/api/wxlogin', async (req, res) => {
-  const { code, encryptedData, iv } = req.body;
+  const { code } = req.body;
 
   try {
-    // 调用微信接口换取 openid
-    const sessionData = await getSessionFromWeixin(code); // 你已有的函数
+    const sessionData = await getSessionFromWeixin(code);
     const openid = sessionData.openid;
+    console.log('WX code:', code, 'openid:', openid);
+
+    if (!openid) return res.status(400).json({ error: '获取openid失败' });
 
     // 查询用户
-    let user = await db.get('SELECT * FROM users WHERE openid = ?', [openid]);
+    db.get('SELECT * FROM users WHERE openid = ?', [openid], (err, user) => {
+      if (err) return res.status(500).json({ error: '数据库查询错误' });
 
-    if (!user) {
-      // 自动注册游客账号
-      const username = `游客_${Date.now()}`;
-      const role = 'student'; // 默认角色，可根据需求改
-      const result = await db.run(
-        'INSERT INTO users (username, role, openid) VALUES (?, ?, ?)',
-        [username, role, openid]
-      );
-      user = await db.get('SELECT * FROM users WHERE id = ?', [result.lastID]);
-    }
-
-    res.json(user);
+      if (user) {
+        res.json(user);
+      } else {
+        // 自动注册游客账号
+        const username = `游客_${Date.now()}`;
+        const role = 'student';
+        db.run(
+          'INSERT INTO users (username, role, openid) VALUES (?, ?, ?)',
+          [username, role, openid],
+          function(err) {
+            if (err) { console.error(err); return res.status(500).json({ error: '注册游客失败' }); }
+            db.get('SELECT * FROM users WHERE id = ?', [this.lastID], (err2, newUser) => {
+              if (err2) return res.status(500).json({ error: '查询新用户失败' });
+              res.json(newUser);
+            });
+          }
+        );
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: '服务器错误' });
   }
 });
+
 // ===== 教师查看学生答题统计 =====
 app.get('/api/user-stats', (req, res) => {
   const { role } = req.query;
@@ -161,3 +172,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running with SQLite at http://localhost:${PORT}`);
 });
+
+
