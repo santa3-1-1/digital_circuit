@@ -1,0 +1,20 @@
+<view class="page">
+  <text class="title">👩‍🏫 学生成绩总览</text>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}">加载中...</view>
+
+  <!-- 空数据占位 -->
+  <view wx:if="{{!loading && stats.length === 0}}">
+    <text class="note">暂无学生数据</text>
+  </view>
+
+  <!-- 学生成绩列表 -->
+  <block wx:if="{{!loading && stats.length > 0}}" wx:for="{{stats}}" wx:key="username">
+    <view class="card">
+      <text class="name">{{item.username}}</text>
+      <text class="info">答题数：{{item.total}}</text>
+      <text class="info">正确率：{{item.accuracy || 0}}%</text>
+    </view>
+  </block>
+</view>

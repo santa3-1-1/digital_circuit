@@ -1,0 +1,28 @@
+<view class="page">
+  <text class="title">📘 解答解析</text>
+  <text class="score">本次得分：{{score}} / {{total}}</text>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}">加载中...</view>
+
+  <!-- 空数据占位 -->
+  <view wx:elif="{{!questions.length}}">暂无题目解析</view>
+
+  <!-- 题目列表 -->
+  <scroll-view scroll-y="true" class="scroll" wx:else>
+    <block wx:for="{{questions}}" wx:key="id">
+      <view class="card">
+        <text class="q">{{index + 1}}. {{item.question}}</text>
+        <view class="options">
+          <block wx:for="{{item.options}}" wx:key="*this">
+            <text class="opt {{item === item.answer ? 'correct' : ''}}">
+              {{item}}
+            </text>
+          </block>
+        </view>
+        <text class="answer">✔ 正确答案：{{item.answer}}</text>
+        <text class="explain">📖 解析：{{item.explanation || '暂无解析'}}</text>
+      </view>
+    </block>
+  </scroll-view>
+</view>

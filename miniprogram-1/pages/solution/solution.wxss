@@ -1,0 +1,59 @@
+.page {
+  padding: 20rpx;
+}
+
+.title {
+  font-size: 38rpx;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+
+.score {
+  text-align: center;
+  font-size: 32rpx;
+  color: #1976d2;
+  margin-bottom: 20rpx;
+}
+
+.scroll {
+  height: 85vh;
+}
+
+.card {
+  background: #f8f8f8;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.q {
+  font-size: 32rpx;
+  color: #333;
+}
+
+.opt {
+  display: block;
+  padding: 10rpx 0;
+  font-size: 30rpx;
+  color: #666;
+}
+
+.correct {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+.answer {
+  color: #1976d2;
+  margin-top: 10rpx;
+  display: block;
+}
+
+.explain {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  color: #555;
+}

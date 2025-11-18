@@ -1,0 +1,37 @@
+<view class="page">
+
+<text class="title">🔐 数字电路学习系统</text>
+
+<!-- 角色切换 -->
+<view class="role-switch">
+  <view class="role-item {{role === 'student' ? 'active' : ''}}"
+        data-role="student"
+        bindtap="onSelectRole">学生</view>
+  <view class="role-item {{role === 'teacher' ? 'active' : ''}}"
+        data-role="teacher"
+        bindtap="onSelectRole">教师</view>
+</view>
+
+<!-- 账号输入 -->
+<input class="input" 
+       placeholder="{{ role === 'student' ? '请输入学号' : '请输入教师账号' }}" 
+       data-field="username" 
+       bindinput="onInput" />
+
+<input class="input" 
+       placeholder="请输入密码" 
+       password="true" 
+       data-field="password" 
+       bindinput="onInput" />
+
+<!-- 登录按钮或加载中 -->
+<button class="btn" bindtap="login" wx:if="{{!loading}}">账号密码登录</button>
+<view wx:if="{{loading}}" class="loading">正在登录...</view>
+
+<!-- 微信快捷登录 -->
+<button class="wx-btn" open-type="getUserInfo" bindtap="wxLogin">
+  微信快捷登录
+</button>
+
+<text class="error">{{errorMsg}}</text>
+</view>

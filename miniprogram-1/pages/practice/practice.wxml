@@ -1,0 +1,33 @@
+<view class="page">
+  <text class="title">🧠 练习模块</text>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}">加载中...</view>
+
+  <!-- 空题占位 -->
+  <view wx:elif="{{!questions.length}}">暂无题目，请稍后</view>
+
+  <!-- 题目列表 -->
+  <view wx:else>
+    <block wx:for="{{questions}}" wx:key="id">
+      <view class="card">
+        <text class="question">{{item.question}}</text>
+
+        <!-- ⚠ 指定循环变量 wx:for-item="option" -->
+        <block wx:for="{{item.options}}" wx:key="index" wx:for-item="option">
+          <button class="option"
+                  bindtap="chooseAnswer"
+                  data-qid="{{item.id}}"
+                  data-answer="{{item.answer}}"
+                  data-choice="{{option}}">
+            {{option}}
+          </button>
+        </block>
+
+      </view>
+    </block>
+  </view>
+
+  <!-- 答题反馈 -->
+  <text class="result">{{resultText}}</text>
+</view>

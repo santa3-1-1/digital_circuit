@@ -1,0 +1,36 @@
+<view class="page">
+  <text class="title">📘 错题本</text>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}">加载中...</view>
+
+  <!-- 空数据占位 -->
+  <view wx:elif="{{!loading && wrongList.length === 0}}">
+    <text>🎉 当前没有错题！</text>
+  </view>
+
+  <!-- 错题列表 -->
+  <view wx:else>
+    <block wx:for="{{wrongList}}" wx:key="id">
+      <view class="card" bindtap="selectQuestion" data-q="{{item}}">
+        <text class="question">{{item.question}}</text>
+      </view>
+    </block>
+  </view>
+
+  <!-- 当前选中题目 -->
+  <view wx:if="{{currentQuestion}}" class="redo-area">
+    <text class="redo-title">🔄 再次作答：</text>
+    <text class="redo-question">{{currentQuestion.question}}</text>
+
+    <view class="options">
+      <block wx:for="{{currentQuestion.options}}" wx:key="*this">
+        <button class="option-btn" bindtap="redoQuestion" data-option="{{item}}">
+          {{item}}
+        </button>
+      </block>
+    </view>
+
+    <text class="feedback">{{feedback}}</text>
+  </view>
+</view>
