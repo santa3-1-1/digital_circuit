@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./database');
+const axios = require('axios');
 
 const app = express();
 app.use(cors());
@@ -147,6 +148,88 @@ app.post('/api/login', (req, res) => {
       res.json({ id: user.id, username: user.username, role: user.role });
     }
   );
+});
+// 微信一键登录接口：POST /api/wxlogin
+app.post('/api/wxlogin', async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ error: '缺少 code' });
+
+    // 从环境变量读取微信小程序的 appid / secret（在 Render 上配置）
+    const appid = process.env.WX_APPID || process.env.WECHAT_APPID;
+    const secret = process.env.WX_SECRET || process.env.WECHAT_SECRET;
+    if (!appid || !secret) {
+      return res.status(500).json({ error: '服务器未配置微信 AppID/SECRET' });
+    }
+
+    // 调用微信 jscode2session 换取 openid & session_key
+    const url = `https://api.weixin.qq.com/sns/jscode2session`;
+    const params = {
+      appid,
+      secret,
+      js_code: code,
+      grant_type: 'authorization_code'
+    };
+
+    const wechatResp = await axios.get(url, { params, timeout: 10000 });
+    const data = wechatResp.data;
+
+    if (data.errcode) {
+      console.error('jscode2session 返回错误：', data);
+      return res.status(500).json({ error: '微信换取 openid 失败', detail: data });
+    }
+
+    const openid = data.openid;
+    if (!openid) {
+      return res.status(500).json({ error: '未获得 openid', detail: data });
+    }
+
+    // 根据 openid 查找或创建用户
+    db.get('SELECT * FROM users WHERE openid = ?', [openid], (err, user) => {
+      if (err) {
+        console.error('查询 users 表时出错', err);
+        return res.status(500).json({ error: '数据库查询错误' });
+      }
+
+      if (user) {
+        // 已有用户，返回用户信息（可在前端存储）
+        return res.json({
+          id: user.id,
+          username: user.username,
+          role: user.role || 'student',
+          openid
+        });
+      }
+
+      // 新用户：创建一条记录（将 openid 与一个自动生成用户名关联）
+      const username = 'wx_' + openid.slice(0, 8);
+      const password = ''; // 微信登录不需要密码
+      const role = 'student';
+
+      db.run(
+        `INSERT INTO users (username, password, role, openid) VALUES (?, ?, ?, ?)`,
+        [username, password, role, openid],
+        function (insertErr) {
+          if (insertErr) {
+            console.error('插入新用户失败', insertErr);
+            return res.status(500).json({ error: '创建用户失败' });
+          }
+
+          const newUser = {
+            id: this.lastID,
+            username,
+            role,
+            openid
+          };
+          console.log('✅ 新微信用户已创建', newUser);
+          return res.json(newUser);
+        }
+      );
+    });
+  } catch (e) {
+    console.error('wxlogin 异常：', e && e.message ? e.message : e);
+    return res.status(500).json({ error: '服务器内部错误', detail: e && e.message ? e.message : e });
+  }
 });
 
 // 教师查看所有学生答题情况
