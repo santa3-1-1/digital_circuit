@@ -48,8 +48,21 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE,
   password TEXT,
-  role TEXT CHECK(role IN ('student', 'teacher'))
+  role TEXT CHECK(role IN ('student', 'teacher')),
+ openid TEXT UNIQUE
 )`);
+
+// 兼容已有数据库：尝试添加 openid 列（若已存在会报错，错误会被忽略）
+  db.run(`ALTER TABLE users ADD COLUMN openid TEXT UNIQUE`, (err) => {
+    if (err) {
+      // 忽略列已存在的错误
+      if (!/duplicate|already exists|duplicate column/i.test(err.message)) {
+        console.warn('尝试添加 openid 字段时发生错误：', err.message);
+      }
+    } else {
+      console.log('✅ users 表已添加 openid 字段（如先前无此字段）');
+    }
+  });
 
 // 初始化默认用户
 db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
