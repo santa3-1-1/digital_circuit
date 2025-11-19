@@ -136,61 +136,74 @@ app.get('/api/user-stats', (req, res) => {
   });
 });
 
-// ===== 新增接口：预习模块 =====
+// ===== 新增接口：预习模块整合版 =====
 
+// 获取章节列表
 app.get('/preview/chapters', (req, res) => {
   db.all(`SELECT id, title FROM chapters ORDER BY id`, (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
+    res.json(rows); // 返回数组 [{id, title}, ...]
   });
 });
 
-
-// 获取章节内容分页
+// 获取章节内容
 app.get('/preview/content', (req, res) => {
   const chapterId = req.query.chapterId;
+  if (!chapterId) return res.status(400).json({ error: '缺少 chapterId 参数' });
 
-  db.all(
-    `SELECT page_index, html FROM chapter_content WHERE chapter_id = ? ORDER BY page_index`,
-    [chapterId],
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows);
-    }
-  );
+  // 查询章节信息
+  db.get(`SELECT id, title FROM chapters WHERE id = ?`, [chapterId], (err, chapter) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!chapter) return res.status(404).json({ error: '章节不存在' });
+
+    // 查询内容页
+    db.all(
+      `SELECT page_index, html FROM chapter_content WHERE chapter_id = ? ORDER BY page_index`,
+      [chapterId],
+      (err2, rows) => {
+        if (err2) return res.status(500).json({ error: err2.message });
+
+        // 转成 rich-text 可识别的节点数组
+        const contentPages = rows.map(p => [{ name: 'div', children: [{ type: 'text', text: p.html || '' }] }]);
+
+        res.json({
+          chapterInfo: chapter,  // 包含 id, title
+          contentPages
+        });
+      }
+    );
+  });
 });
 
 // 获取章节小测
 app.get('/preview/quiz', (req, res) => {
   const chapterId = req.query.chapterId;
+  if (!chapterId) return res.status(400).json({ error: '缺少 chapterId 参数' });
 
   db.all(
     `SELECT id, question, answer FROM chapter_quiz WHERE chapter_id = ?`,
     [chapterId],
     (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.json(rows);
+      res.json(rows); // 返回 [{id, question, answer}, ...]
     }
   );
 });
 
-
 // 提交小测答案
 app.post('/preview/quiz/submit', (req, res) => {
   const { userId, quizId, userAnswer } = req.body;
+  if (!quizId || userAnswer === undefined) return res.status(400).json({ error: '缺少 quizId 或 userAnswer' });
 
   db.run(
-    `INSERT INTO quiz_record (user_id, quiz_id, user_answer)
-     VALUES (?, ?, ?)`,
-    [userId, quizId, userAnswer ? 1 : 0],
+    `INSERT INTO quiz_record (user_id, quiz_id, user_answer) VALUES (?, ?, ?)`,
+    [userId || 'guest', quizId, userAnswer ? 1 : 0],
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, recordId: this.lastID });
     }
   );
 });
-
-
 // ===== 微信接口换取 session_key 和 openid =====
 async function getSessionFromWeixin(code) {
   const appid = 'wx152d55febb831e42';
