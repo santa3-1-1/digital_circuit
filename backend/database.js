@@ -3,22 +3,21 @@ const db = new sqlite3.Database('./digital_circuit.db');
 
 // 初始化数据表
 db.serialize(() => {
-  // === 新：章节列表 ===
+  // === 章节表 ===
   db.run(`
     CREATE TABLE IF NOT EXISTS chapters (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL
+      title TEXT
     )
   `);
 
-  // === 新：章节内容分页表 ===
+  // === 章节内容分页表 ===
   db.run(`
     CREATE TABLE IF NOT EXISTS chapter_content (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       chapter_id INTEGER,
       page_index INTEGER,
-      html TEXT,
-      FOREIGN KEY (chapter_id) REFERENCES chapters(id)
+      html TEXT
     )
   `);
 
@@ -28,7 +27,7 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       chapter_id INTEGER,
       question TEXT,
-      answer INTEGER,   -- 1 代表正确，0 代表错误（判断题）
+      answer INTEGER,
       FOREIGN KEY (chapter_id) REFERENCES chapters(id)
     )
   `);
@@ -39,7 +38,7 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id TEXT,
       quiz_id INTEGER,
-      user_answer INTEGER,   -- 用户提交的答案（1/0）
+      user_answer INTEGER,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (quiz_id) REFERENCES chapter_quiz(id)
     )
@@ -114,30 +113,30 @@ db.serialize(() => {
       `);
     }
   });
-
   // === 插入示例：章节内容分页 ===
   db.get("SELECT COUNT(*) AS count FROM chapter_content", (err, row) => {
     if (!row || row.count === 0) {
-      db.run(`
-        INSERT INTO chapter_content (chapter_id, page_index, html)
-        VALUES
-        (1, 1, '<h3>与门 AND</h3><p>所有输入为1时输出为1。</p>'),
-        (1, 2, '<h3>或门 OR</h3><p>任意输入为1时输出为1。</p>')
-      `);
+      const contentInserts = [];
+      for (let chap = 1; chap <= 4; chap++) {
+        contentInserts.push(`(${chap}, 1, '<h3>第${chap}章 - 内容页1</h3><p>这里是第${chap}章的示例内容页1。</p>')`);
+        contentInserts.push(`(${chap}, 2, '<h3>第${chap}章 - 内容页2</h3><p>这里是第${chap}章的示例内容页2。</p>')`);
+      }
+      db.run(`INSERT INTO chapter_content (chapter_id, page_index, html) VALUES ${contentInserts.join(',')}`);
     }
   });
 
   // === 插入示例：章节小测判断题 ===
   db.get("SELECT COUNT(*) AS count FROM chapter_quiz", (err, row) => {
     if (!row || row.count === 0) {
-      db.run(`
-        INSERT INTO chapter_quiz (chapter_id, question, answer)
-        VALUES
-        (1, '与门在所有输入为1时输出为1。', 1),
-        (1, '或门在所有输入为0时输出为1。', 0)
-      `);
+      const quizInserts = [];
+      for (let chap = 1; chap <= 4; chap++) {
+        quizInserts.push(`(${chap}, '第${chap}章 - 判断题1内容？', 1)`);
+        quizInserts.push(`(${chap}, '第${chap}章 - 判断题2内容？', 0)`);
+      }
+      db.run(`INSERT INTO chapter_quiz (chapter_id, question, answer) VALUES ${quizInserts.join(',')}`);
     }
   });
+
 
   // === 插入示例练习题（保留你的原内容） ===
   db.get("SELECT COUNT(*) AS count FROM questions", (err, row) => {
@@ -159,3 +158,4 @@ db.serialize(() => {
 
 console.log('✅ 数据库初始化完成');
 module.exports = db;
+
