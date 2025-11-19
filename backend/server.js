@@ -136,56 +136,53 @@ app.get('/api/user-stats', (req, res) => {
   });
 });
 
-// ===== 新增接口：预习模块整合版 =====
+// ===== 新增/更新接口：预习模块 =====
 
 // 获取章节列表
 app.get('/preview/chapters', (req, res) => {
   db.all(`SELECT id, title FROM chapters ORDER BY id`, (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(rows); // 返回数组 [{id, title}, ...]
+    res.json(rows); // 返回数组，前端直接使用
   });
 });
 
-// 获取章节内容
+// 获取章节内容 + 分页
 app.get('/preview/content', (req, res) => {
-  const chapterId = req.query.chapterId;
-  if (!chapterId) return res.status(400).json({ error: '缺少 chapterId 参数' });
+  const chapterId = parseInt(req.query.chapterId);
+  if (!chapterId) return res.status(400).json({ error: '缺少章节ID' });
 
-  // 查询章节信息
-  db.get(`SELECT id, title FROM chapters WHERE id = ?`, [chapterId], (err, chapter) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!chapter) return res.status(404).json({ error: '章节不存在' });
+  db.all(
+    `SELECT page_index, html FROM chapter_content WHERE chapter_id = ? ORDER BY page_index`,
+    [chapterId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-    // 查询内容页
-    db.all(
-      `SELECT page_index, html FROM chapter_content WHERE chapter_id = ? ORDER BY page_index`,
-      [chapterId],
-      (err2, rows) => {
+      // 格式化为 rich-text 需要的结构
+      const contentPages = rows.map(p => ({ name: 'div', children: [{ type: 'text', text: p.html }] }));
+
+      // 获取章节基本信息
+      db.get(`SELECT id, title FROM chapters WHERE id = ?`, [chapterId], (err2, chapter) => {
         if (err2) return res.status(500).json({ error: err2.message });
-
-        // 转成 rich-text 可识别的节点数组
-        const contentPages = rows.map(p => [{ name: 'div', children: [{ type: 'text', text: p.html || '' }] }]);
-
         res.json({
-          chapterInfo: chapter,  // 包含 id, title
+          chapterInfo: chapter,
           contentPages
         });
-      }
-    );
-  });
+      });
+    }
+  );
 });
 
 // 获取章节小测
 app.get('/preview/quiz', (req, res) => {
-  const chapterId = req.query.chapterId;
-  if (!chapterId) return res.status(400).json({ error: '缺少 chapterId 参数' });
+  const chapterId = parseInt(req.query.chapterId);
+  if (!chapterId) return res.status(400).json({ error: '缺少章节ID' });
 
   db.all(
     `SELECT id, question, answer FROM chapter_quiz WHERE chapter_id = ?`,
     [chapterId],
     (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.json(rows); // 返回 [{id, question, answer}, ...]
+      res.json(rows);
     }
   );
 });
@@ -193,7 +190,7 @@ app.get('/preview/quiz', (req, res) => {
 // 提交小测答案
 app.post('/preview/quiz/submit', (req, res) => {
   const { userId, quizId, userAnswer } = req.body;
-  if (!quizId || userAnswer === undefined) return res.status(400).json({ error: '缺少 quizId 或 userAnswer' });
+  if (!quizId) return res.status(400).json({ error: '缺少quizId' });
 
   db.run(
     `INSERT INTO quiz_record (user_id, quiz_id, user_answer) VALUES (?, ?, ?)`,
@@ -204,6 +201,7 @@ app.post('/preview/quiz/submit', (req, res) => {
     }
   );
 });
+
 // ===== 微信接口换取 session_key 和 openid =====
 async function getSessionFromWeixin(code) {
   const appid = 'wx152d55febb831e42';
