@@ -55,6 +55,18 @@ db.serialize(() => {
     )
   `);
 
+  // ===【新增】favorite_questions 收藏表===
+
+db.run(`
+  CREATE TABLE IF NOT EXISTS favorite_questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT,
+    question_id INTEGER,
+    UNIQUE(user_id, question_id)
+  )
+`);
+
+
   // === 原：答题记录表 ===
   db.run(`
     CREATE TABLE IF NOT EXISTS answer_records (
@@ -158,4 +170,3 @@ db.serialize(() => {
 
 console.log('✅ 数据库初始化完成');
 module.exports = db;
-
