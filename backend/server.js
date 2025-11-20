@@ -157,15 +157,15 @@ app.get('/preview/content', (req, res) => {
     (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
 
-      // 格式化为 rich-text 需要的结构
-      const contentPages = rows.map(p => ({ name: 'div', children: [{ type: 'text', text: p.html }] }));
+      // 直接返回 HTML 字符串数组
+      const contentPages = rows.map(p => p.html);
 
       // 获取章节基本信息
       db.get(`SELECT id, title FROM chapters WHERE id = ?`, [chapterId], (err2, chapter) => {
         if (err2) return res.status(500).json({ error: err2.message });
         res.json({
           chapterInfo: chapter,
-          contentPages
+          contentPages  // 现在返回的是字符串数组
         });
       });
     }
