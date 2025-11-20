@@ -42,6 +42,57 @@ app.post('/api/submit', (req, res) => {
   );
 });
 
+// ===== 新增/更新接口：练习模块 （获取解析，收藏题目，取消收藏）=====
+app.get('/api/explanation', (req, res) => {
+  const questionId = req.query.id;
+  if (!questionId) return res.status(400).json({ error: '缺少题目ID' });
+
+  db.get(
+    `SELECT id, question, explanation FROM questions WHERE id = ?`,
+    [questionId],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: '查询失败' });
+      res.json(row);
+    }
+  );
+});
+
+
+app.post('/api/favorite', (req, res) => {
+  const { user_id, question_id } = req.body;
+  if (!question_id) return res.status(400).json({ error: '缺少题目ID' });
+
+  db.run(
+    `INSERT OR IGNORE INTO favorite_questions (user_id, question_id)
+     VALUES (?, ?)`,
+    [user_id || 'guest', question_id],
+    (err) => {
+      if (err) return res.status(500).json({ error: '收藏失败' });
+      res.json({ success: true });
+    }
+  );
+});
+
+app.get('/api/favorite', (req, res) => {
+  const user_id = req.query.user_id || 'guest';
+
+  db.all(
+    `SELECT q.id, q.question, q.options, q.answer, q.explanation
+     FROM favorite_questions f
+     JOIN questions q ON f.question_id = q.id
+     WHERE f.user_id = ?`,
+    [user_id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: '查询收藏失败' });
+
+      const formatted = rows.map(q => ({ ...q, options: JSON.parse(q.options) }));
+      res.json(formatted);
+    }
+  );
+});
+
+
+
 // ===== 原有接口：错题查询 =====
 app.get('/api/wrongs', (req, res) => {
   const user_id = req.query.user_id || 'guest';
