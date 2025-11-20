@@ -91,6 +91,46 @@ app.get('/api/favorite', (req, res) => {
   );
 });
 
+// ===== 新增接口：按章节与 index 获取单个题目 =====
+app.get('/api/question', (req, res) => {
+  const { chapterId, index } = req.query;
+
+  if (index === undefined) {
+    return res.status(400).json({ error: '缺少 index 参数' });
+  }
+
+  db.get(
+    `SELECT COUNT(*) AS total FROM questions WHERE chapter_id = ?`,
+    [chapterId],
+    (err, totalRow) => {
+      if (err) return res.status(500).json({ error: '数据库查询错误' });
+
+      db.get(
+        `SELECT * FROM questions WHERE chapter_id = ? LIMIT 1 OFFSET ?`,
+        [chapterId, index],
+        (err, row) => {
+          if (err) return res.status(500).json({ error: "数据库查询错误" });
+
+          if (!row) {
+            return res.json({ question: null, total: totalRow.total });
+          }
+
+          res.json({
+            question: {
+              id: row.id,
+              question: row.question,
+              options: JSON.parse(row.options),
+              answer: row.answer,
+              explanation: row.explanation
+            },
+            total: totalRow.total
+          });
+        }
+      );
+    }
+  );
+});
+
 
 
 // ===== 原有接口：错题查询 =====
