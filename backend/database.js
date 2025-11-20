@@ -48,13 +48,13 @@ db.serialize(() => {
 db.run(`
   CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chapterId INTEGER,
     title TEXT,
     options TEXT,
     answer TEXT,
     explanation TEXT
   )
 `);
-
   // ===【新增】favorite_questions 收藏表===
 
 db.run(`
@@ -150,34 +150,37 @@ db.run(`
   });
 
 
-// 插入默认题目：如果没有数据（防止重复插入）
+// 插入默认题目
 db.get("SELECT COUNT(*) AS count FROM questions", (err, row) => {
   if (row.count === 0) {
     console.log("正在插入默认题目...");
 
     const stmt = db.prepare(`
-      INSERT INTO questions (title, options, answer, explanation)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO questions (chapterId, title, options, answer, explanation)
+      VALUES (?, ?, ?, ?, ?)
     `);
 
     stmt.run(
+      1,
       "下面哪个逻辑门的输出是 AND？",
       JSON.stringify(["与门", "或门", "非门", "异或门"]),
-      "与门",
+      "0",
       "AND 门当且仅当两个输入均为 1 时输出 1"
     );
 
     stmt.run(
+      1,
       "二进制 1011 转换为十进制是多少？",
       JSON.stringify(["9", "10", "11", "13"]),
-      "11",
+      "2",
       "1011 = 8 + 0 + 2 + 1 = 11"
     );
 
     stmt.run(
+      2,
       "组合逻辑电路的输出只取决于？",
       JSON.stringify(["输入状态", "时钟信号", "锁存器", "触发器"]),
-      "输入状态",
+      "0",
       "组合逻辑电路无存储功能，所以输出只依赖输入"
     );
 
@@ -185,7 +188,6 @@ db.get("SELECT COUNT(*) AS count FROM questions", (err, row) => {
     console.log("默认题目插入完成！");
   }
 });
-
 });
 
 console.log('✅ 数据库初始化完成');
