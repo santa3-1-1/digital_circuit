@@ -101,6 +101,23 @@ app.get('/api/question', (req, res) => {
   });
 });
 
+// ===== 题目解析接口 =====
+app.get('/api/explanation', (req, res) => {
+  const questionId = req.query.id; // 前端会传 ?id=xxx
+  if (!questionId) return res.status(400).json({ error: '缺少题目ID' });
+
+  db.get(
+    `SELECT id, title, answer, explanation FROM questions WHERE id = ?`,
+    [questionId],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: '查询失败' });
+      if (!row) return res.status(404).json({ error: '题目不存在' });
+      res.json(row);
+    }
+  );
+});
+
+
 // ===== 错题查询 =====
 app.get('/api/wrongs', (req, res) => {
   const user_id = req.query.user_id || 'guest';
@@ -258,3 +275,4 @@ async function getSessionFromWeixin(code) {
 // ===== 启动服务 =====
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+
