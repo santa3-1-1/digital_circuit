@@ -38,7 +38,11 @@ app.post('/api/submit', (req, res) => {
         db.run(`DELETE FROM wrong_questions WHERE user_id = ? AND question_id = ?`, [user_id || 'guest', question_id]);
       }
 
-      res.json({ message: '答题记录已保存' });
+     // ✅ 返回是否答对
+      res.json({
+        message: '答题记录已保存',
+        isCorrect: is_correct
+      });
     }
   );
 });
@@ -275,4 +279,3 @@ async function getSessionFromWeixin(code) {
 // ===== 启动服务 =====
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
-
