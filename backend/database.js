@@ -164,7 +164,7 @@ db.get("SELECT COUNT(*) AS count FROM questions", (err, row) => {
       1,
       "下面哪个逻辑门的输出是 AND？",
       JSON.stringify(["与门", "或门", "非门", "异或门"]),
-      "0",
+      "与门",
       "AND 门当且仅当两个输入均为 1 时输出 1"
     );
 
@@ -172,7 +172,7 @@ db.get("SELECT COUNT(*) AS count FROM questions", (err, row) => {
       1,
       "二进制 1011 转换为十进制是多少？",
       JSON.stringify(["9", "10", "11", "13"]),
-      "2",
+      "11",
       "1011 = 8 + 0 + 2 + 1 = 11"
     );
 
@@ -180,7 +180,7 @@ db.get("SELECT COUNT(*) AS count FROM questions", (err, row) => {
       2,
       "组合逻辑电路的输出只取决于？",
       JSON.stringify(["输入状态", "时钟信号", "锁存器", "触发器"]),
-      "0",
+      "输入状态",
       "组合逻辑电路无存储功能，所以输出只依赖输入"
     );
 
