@@ -124,20 +124,24 @@ app.get('/api/explanation', (req, res) => {
 
 // ===== 错题查询 =====
 app.get('/api/wrongs', (req, res) => {
-  const user_id = req.query.user_id || 'guest';
-  db.all(
-    `SELECT q.id, q.title AS question, q.options, q.answer
-     FROM wrong_questions w
-     JOIN questions q ON w.question_id = q.id
-     WHERE w.user_id = ?`,
-    [user_id],
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: '查询错题失败' });
-      const formatted = rows.map(q => ({ ...q, options: JSON.parse(q.options) }));
-      res.json(formatted);
+  const userId = req.query.user_id;
+  console.log("\n===== 🧪 GET /api/wrongs =====");
+  console.log("▶ 前端传来的 user_id =", userId);
+
+  const sql = "SELECT * FROM wrong_book WHERE user_id = ?";
+  console.log("▶ SQL =", sql, "| PARAMS =", [userId]);
+
+  db.all(sql, [userId], (err, rows) => {
+    if (err) {
+      console.error("❌ SQL 错误：", err);
+      return res.status(500).json({ error: err.message });
     }
-  );
+
+    console.log("✔ SQL 查询结果 rows =", rows);
+    res.json(rows);
+  });
 });
+
 
 // ===== 随机抽题 =====
 app.get('/api/test', (req, res) => {
