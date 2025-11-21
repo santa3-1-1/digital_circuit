@@ -32,16 +32,18 @@ app.post('/api/submit', (req, res) => {
     (err) => {
       if (err) return res.status(500).json({ error: '保存答题记录失败' });
 
-      if (!is_correct) {
-       db.run(
-  `INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`,
-  [String(user_id || 'guest'), question_id]
-);
+    if (!is_correct) {
+  const uid = String(user_id || 'guest');
+  db.run(
+    `INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`,
+    [uid, question_id],
+    function(err) {
+      if (err) console.error('❌ 插入错题失败:', err);
+      else console.log('✔ 插入错题成功', { uid, question_id });
+    }
+  );
+}
 
-      } else {
-        db.run(`DELETE FROM wrong_questions WHERE user_id = ? AND question_id = ?`,[String(user_id || 'guest'), question_id]
-);
-      }
 
      // ✅ 返回是否答对
       res.json({
