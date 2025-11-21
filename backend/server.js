@@ -180,6 +180,57 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+
+//提交测试结果
+// server.js 新增
+app.post('/api/test/submit', (req, res) => {
+  const { user_id, answers } = req.body; 
+  // answers: { questionId: selectedOption }
+
+  if (!user_id || !answers) return res.status(400).json({ error: '缺少用户或答案数据' });
+
+  const ids = Object.keys(answers);
+  if (ids.length === 0) return res.status(400).json({ error: '没有答案' });
+
+  let score = 0;
+  const wrongQuestions = [];
+
+  const insertAnswer = db.prepare(`
+    INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)
+  `);
+
+  ids.forEach(id => {
+    const selected = answers[id];
+    db.get(`SELECT answer FROM questions WHERE id = ?`, [id], (err, row) => {
+      if (!err && row) {
+        const is_correct = selected === row.answer;
+        if (!is_correct) wrongQuestions.push(id);
+        if (is_correct) score += 1;
+
+        // 保存答题记录
+        insertAnswer.run([user_id, id, is_correct ? 1 : 0]);
+
+        // 错题处理
+        if (!is_correct) {
+          db.run(`INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`, [user_id, id]);
+        } else {
+          db.run(`DELETE FROM wrong_questions WHERE user_id = ? AND question_id = ?`, [user_id, id]);
+        }
+      }
+    });
+  });
+
+  insertAnswer.finalize();
+
+  res.json({
+    message: '测试提交成功',
+    total: ids.length,
+    score,
+    wrongQuestions // 返回错题 id 数组
+  });
+});
+
+
 // ===== 登录 =====
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
