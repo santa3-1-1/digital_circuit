@@ -23,29 +23,52 @@ app.get('/api/questions', (req, res) => {
 
 // ===== 练习模块：提交答案 =====
 app.post('/api/submit', (req, res) => {
-  const { user_id, question_id, is_correct } = req.body;
-  if (!question_id || is_correct === undefined) return res.status(400).json({ error: '缺少必要字段' });
+  let { user_id, question_id, is_correct } = req.body;
 
+  // 必填字段检查
+  if (!question_id || is_correct === undefined) {
+    return res.status(400).json({ error: '缺少必要字段' });
+  }
+
+  // 保证 user_id 有值且为字符串
+  user_id = String(user_id || 'guest');
+
+  console.log('▶ /api/submit 调用', { user_id, question_id, is_correct });
+
+  // 1️⃣ 保存答题记录
   db.run(
     `INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)`,
-    [user_id || 'guest', question_id, is_correct ? 1 : 0],
-    (err) => {
-      if (err) return res.status(500).json({ error: '保存答题记录失败' });
-
-    if (!is_correct) {
-  const uid = String(user_id || 'guest');
-  db.run(
-    `INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`,
-    [uid, question_id],
+    [user_id, question_id, is_correct ? 1 : 0],
     function(err) {
-      if (err) console.error('❌ 插入错题失败:', err);
-      else console.log('✔ 插入错题成功', { uid, question_id });
-    }
-  );
-}
+      if (err) {
+        console.error('❌ 保存答题记录失败', err);
+        return res.status(500).json({ error: '保存答题记录失败' });
+      }
 
+      console.log('✔ 答题记录已保存', { recordId: this.lastID });
 
-     // ✅ 返回是否答对
+      // 2️⃣ 处理错题逻辑
+      if (!is_correct) {
+        db.run(
+          `INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`,
+          [user_id, question_id],
+          function(err2) {
+            if (err2) console.error('❌ 插入错题失败', err2);
+            else console.log('✔ 插入错题成功', { user_id, question_id });
+          }
+        );
+      } else {
+        db.run(
+          `DELETE FROM wrong_questions WHERE user_id = ? AND question_id = ?`,
+          [user_id, question_id],
+          function(err3) {
+            if (err3) console.error('❌ 删除错题失败', err3);
+            else console.log('✔ 删除错题成功', { user_id, question_id });
+          }
+        );
+      }
+
+      // 3️⃣ 返回结果给前端
       res.json({
         message: '答题记录已保存',
         isCorrect: is_correct
