@@ -20,34 +20,23 @@ app.get('/api/questions', (req, res) => {
     res.json(formatted);
   });
 });
-
-// ===== 练习模块：提交答案 =====
+//submit
 app.post('/api/submit', (req, res) => {
   let { user_id, question_id, is_correct } = req.body;
 
   // 必填字段检查
-  if (!question_id || is_correct === undefined) {
-    return res.status(400).json({ error: '缺少必要字段' });
-  }
+  if (!user_id) return res.status(400).json({ error: '缺少 user_id' });
+  if (!question_id || is_correct === undefined) return res.status(400).json({ error: '缺少必要字段' });
 
-  // 保证 user_id 有值且为字符串
-  user_id = String(user_id || 'guest');
+  user_id = String(user_id); // 强制转换为字符串，和 wrong_questions 表匹配
 
-  console.log('▶ /api/submit 调用', { user_id, question_id, is_correct });
-
-  // 1️⃣ 保存答题记录
   db.run(
     `INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)`,
     [user_id, question_id, is_correct ? 1 : 0],
     function(err) {
-      if (err) {
-        console.error('❌ 保存答题记录失败', err);
-        return res.status(500).json({ error: '保存答题记录失败' });
-      }
+      if (err) return res.status(500).json({ error: '保存答题记录失败' });
 
-      console.log('✔ 答题记录已保存', { recordId: this.lastID });
-
-      // 2️⃣ 处理错题逻辑
+      // 错题处理
       if (!is_correct) {
         db.run(
           `INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`,
@@ -68,11 +57,7 @@ app.post('/api/submit', (req, res) => {
         );
       }
 
-      // 3️⃣ 返回结果给前端
-      res.json({
-        message: '答题记录已保存',
-        isCorrect: is_correct
-      });
+      res.json({ message: '答题记录已保存', isCorrect: is_correct });
     }
   );
 });
