@@ -128,8 +128,14 @@ app.get('/api/wrongs', (req, res) => {
   console.log("\n===== 🧪 GET /api/wrongs =====");
   console.log("▶ 前端传来的 user_id =", userId);
 
-  const sql = "SELECT * FROM wrong_book WHERE user_id = ?";
-  console.log("▶ SQL =", sql, "| PARAMS =", [userId]);
+  // 使用正确表名 wrong_questions
+  const sql = `
+    SELECT q.id, q.title AS question, q.options, q.answer
+    FROM wrong_questions w
+    JOIN questions q ON w.question_id = q.id
+    WHERE w.user_id = ?
+  `;
+  console.log("▶ SQL =", sql.trim(), "| PARAMS =", [userId]);
 
   db.all(sql, [userId], (err, rows) => {
     if (err) {
@@ -138,7 +144,10 @@ app.get('/api/wrongs', (req, res) => {
     }
 
     console.log("✔ SQL 查询结果 rows =", rows);
-    res.json(rows);
+
+    // 确保 options 返回为数组
+    const formatted = rows.map(q => ({ ...q, options: JSON.parse(q.options) }));
+    res.json(formatted);
   });
 });
 
