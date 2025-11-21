@@ -67,19 +67,21 @@ app.post('/api/favorite', (req, res) => {
   const { user_id, question_id } = req.body;
   if (!question_id) return res.status(400).json({ error: '缺少题目ID' });
 
+  const uid = String(user_id || 'guest'); // ✅ 统一为字符串
+
   db.run(
     `INSERT OR IGNORE INTO favorite_questions (user_id, question_id) VALUES (?, ?)`,
-    [user_id || 'guest', question_id],
+    [uid, question_id],
     (err) => {
       if (err) return res.status(500).json({ error: '收藏失败' });
-      res.json({ success: true });
+      res.json({ success: true, user_id: uid, question_id });
     }
   );
 });
 
-// 获取收藏题目
+// ===== 获取收藏题目 =====
 app.get('/api/favorite', (req, res) => {
-  const user_id = req.query.user_id || 'guest';
+  const user_id = String(req.query.user_id || 'guest'); // ✅ 统一为字符串
 
   db.all(
     `SELECT q.id, q.title AS question, q.options, q.answer, q.explanation
