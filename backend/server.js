@@ -1,217 +1,341 @@
-// server.js（完整版）
+// server.js
 const express = require('express');
 const cors = require('cors');
-const db = require('./database'); 
+const db = require('./database'); // 使用你的 database.js
 const axios = require('axios');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ================= 日志工具 =================
-function log(title, content) {
-  console.log(`\n===== ${title} =====`);
-  console.log(content);
-  console.log(`===== END ${title} =====\n`);
-}
-
-// ================= 根路由测试 =================
+// ===== 根路由测试服务 =====
 app.get('/', (req, res) => {
-  res.send('Digital Circuit Server Running...');
+  res.json({ status: 'ok', message: 'Server is live' });
 });
 
-// ================= 1. 登录接口 =================
-app.post('/api/login', (req, res) => {
-  const { username, password, role } = req.body;
-
-  log('登录请求', req.body);
-
-  db.get(
-    `SELECT * FROM users WHERE username=? AND password=? AND role=?`,
-    [username, password, role],
-    (err, row) => {
-      if (err) {
-        log('登录失败（数据库错误）', err);
-        return res.status(500).json({ error: '数据库错误' });
-      }
-      if (!row) {
-        log('登录失败（无效用户）', { username, role });
-        return res.status(401).json({ error: '用户名或密码错误' });
-      }
-
-      log('登录成功', row);
-      res.json({ success: true, user_id: row.id, role: row.role });
-    }
-  );
-});
-
-// ================= 2. 获取题目（练习用） =================
+// ===== 练习模块：获取所有题目 =====
 app.get('/api/questions', (req, res) => {
-  log('请求题目列表', '');
-
-  db.all(`SELECT * FROM questions`, [], (err, rows) => {
-    if (err) {
-      log('获取题目失败', err);
-      return res.status(500).json({ error: '获取题目失败' });
-    }
-
-    const formatted = rows.map(q => ({
-      ...q,
-      options: JSON.parse(q.options)
-    }));
-
-    log('题目返回数量', formatted.length);
+  db.all("SELECT * FROM questions", (err, rows) => {
+    if (err) return res.status(500).json({ error: "数据库查询错误" });
+    const formatted = rows.map(q => ({ ...q, options: JSON.parse(q.options) }));
     res.json(formatted);
   });
 });
 
-// ================= 3. 获取错题 =================
-app.get('/api/wrong-list', (req, res) => {
-  const user_id = parseInt(req.query.user_id);
+// ===== 获取单题（按 index，不用 chapterId） =====
+app.get('/api/question', (req, res) => {
+  const index = parseInt(req.query.index) || 0;
 
-  log('获取错题请求', req.query);
+  db.get(`SELECT COUNT(*) AS total FROM questions`, [], (err, totalRow) => {
+    if (err) return res.status(500).json({ error: '数据库查询错误' });
 
-  db.all(
-    `SELECT q.* 
-     FROM wrong_book w 
-     JOIN questions q ON q.id = w.question_id
-     WHERE w.user_id = ?`,
-    [user_id],
-    (err, rows) => {
-      if (err) {
-        log('获取错题失败', err);
-        return res.status(500).json({ error: '获取错题失败' });
-      }
+    db.get(`SELECT * FROM questions LIMIT 1 OFFSET ?`, [index], (err, row) => {
+      if (err) return res.status(500).json({ error: '数据库查询错误' });
+      if (!row) return res.json({ question: null, total: totalRow.total });
 
-      const formatted = rows.map(q => ({
-        ...q,
-        options: JSON.parse(q.options)
-      }));
-
-      log('错题返回数量', formatted.length);
-      res.json(formatted);
-    }
-  );
+      res.json({
+        question: {
+          id: row.id,
+          question: row.title,
+          options: JSON.parse(row.options),
+          answer: row.answer,
+          explanation: row.explanation
+        },
+        total: totalRow.total
+      });
+    });
+  });
 });
 
-// ================= 4. 错题提交 =================
-app.post('/api/wrong', (req, res) => {
-  const { user_id, question_id } = req.body;
+// ===== 提交答题记录 =====
+app.post('/api/submit', (req, res) => {
+  let { user_id, question_id, is_correct } = req.body;
 
-  log('添加错题记录', req.body);
+  if (!user_id) return res.status(400).json({ error: '缺少 user_id' });
+  if (!question_id || is_correct === undefined) return res.status(400).json({ error: '缺少必要字段' });
+
+  user_id = String(user_id);
 
   db.run(
-    `INSERT INTO wrong_book (user_id, question_id) VALUES (?, ?)`,
-    [user_id, question_id],
-    (err) => {
-      if (err) {
-        log('添加错题失败', err);
-        return res.status(500).json({ error: '添加错题失败或已添加过' });
+    `INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)`,
+    [user_id, question_id, is_correct ? 1 : 0],
+    function(err) {
+      if (err) return res.status(500).json({ error: '保存答题记录失败' });
+
+      if (!is_correct) {
+        db.run(
+          `INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`,
+          [user_id, question_id],
+          function(err2) {
+            if (err2) console.error('❌ 插入错题失败', err2);
+            else console.log('✔ 插入错题成功', { user_id, question_id });
+          }
+        );
+      } else {
+        db.run(
+          `DELETE FROM wrong_questions WHERE user_id = ? AND question_id = ?`,
+          [user_id, question_id],
+          function(err3) {
+            if (err3) console.error('❌ 删除错题失败', err3);
+            else console.log('✔ 删除错题成功', { user_id, question_id });
+          }
+        );
       }
-      log('错题添加成功', { user_id, question_id });
-      res.json({ success: true });
+
+      res.json({ message: '答题记录已保存', isCorrect: is_correct });
     }
   );
 });
 
-// ================= 5. 获取解析（统一接口） =================
-app.get('/api/explanation', (req, res) => {
-  const id = parseInt(req.query.id);
+// ===== 收藏题目 =====
+app.post('/api/favorite', (req, res) => {
+  const { user_id, question_id } = req.body;
+  if (!question_id) return res.status(400).json({ error: '缺少题目ID' });
 
-  log('解析请求题目 ID', id);
+  const uid = String(user_id || 'guest');
 
-  if (!id) {
-    return res.status(400).json({ error: '题目 ID 缺失' });
-  }
-
-  db.get(`SELECT * FROM questions WHERE id = ?`, [id], (err, row) => {
-    if (err) {
-      log('解析查询失败', err);
-      return res.status(500).json({ error: '查询失败' });
+  db.run(
+    `INSERT OR IGNORE INTO favorite_questions (user_id, question_id) VALUES (?, ?)`,
+    [uid, question_id],
+    (err) => {
+      if (err) return res.status(500).json({ error: '收藏失败' });
+      res.json({ success: true, user_id: uid, question_id });
     }
-    if (!row) {
-      log('解析未找到题目', id);
-      return res.status(404).json({ error: '题目不存在' });
-    }
-
-    const formatted = {
-      ...row,
-      options: JSON.parse(row.options)
-    };
-
-    log('解析返回结果', formatted);
-    res.json(formatted);
-  });
+  );
 });
 
-// ================= 6. 测试随机抽题 =================
-app.get('/api/test', (req, res) => {
-  const num = parseInt(req.query.num) || 5;
-
-  log('测试抽题请求', { num });
+// ===== 获取收藏题目 =====
+app.get('/api/favorite', (req, res) => {
+  const user_id = String(req.query.user_id || 'guest');
 
   db.all(
-    `SELECT * FROM questions ORDER BY RANDOM() LIMIT ?`,
-    [num],
+    `SELECT q.id, q.title AS question, q.options, q.answer, q.explanation
+     FROM favorite_questions f
+     JOIN questions q ON f.question_id = q.id
+     WHERE f.user_id = ?`,
+    [user_id],
     (err, rows) => {
-      if (err) {
-        log('测试抽题失败', err);
-        return res.status(500).json({ error: '获取测试题失败' });
-      }
-
-      const formatted = rows.map(q => ({
-        ...q,
-        options: JSON.parse(q.options)
-      }));
-
-      log('测试抽题返回数量', formatted.length);
+      if (err) return res.status(500).json({ error: '查询收藏失败' });
+      const formatted = rows.map(q => ({ ...q, options: JSON.parse(q.options) }));
       res.json(formatted);
     }
   );
 });
 
-// ================= 7. 测试提交 =================
-app.post('/api/test/submit', (req, res) => {
-  const { user_id, answers } = req.body;
+// ===== 题目解析接口 =====
+app.get('/api/explanation', (req, res) => {
+  const questionId = req.query.id;
+  if (!questionId) return res.status(400).json({ error: '缺少题目ID' });
 
-  log('测试提交请求', req.body);
-
-  let score = 0;
-  const wrongList = [];
-
-  const sql = `SELECT id, answer FROM questions WHERE id IN (${answers.map(() => '?').join(',')})`;
-
-  db.all(sql, answers.map(a => a.id), (err, rows) => {
-    if (err) {
-      log('测试提交查询失败', err);
-      return res.status(500).json({ error: '批改失败' });
+  db.get(
+    `SELECT id, title, answer, explanation FROM questions WHERE id = ?`,
+    [questionId],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: '查询失败' });
+      if (!row) return res.status(404).json({ error: '题目不存在' });
+      res.json(row);
     }
+  );
+});
 
-    rows.forEach(row => {
-      const userAns = answers.find(a => a.id === row.id);
-      if (userAns.answer === row.answer) {
-        score++;
-      } else {
-        wrongList.push(row.id);
-      }
-    });
+// ===== 错题查询 =====
+app.get('/api/wrongs', (req, res) => {
+  const userId = String(req.query.user_id || 'guest');
+  console.log("🧪 GET /api/wrongs, user_id =", userId);
 
-    if (wrongList.length > 0) {
-      const insertSql = `INSERT OR IGNORE INTO wrong_book (user_id, question_id) VALUES (?, ?)`;
+  const sql = `
+    SELECT q.id, q.title AS question, q.options, q.answer
+    FROM wrong_questions w
+    JOIN questions q ON w.question_id = q.id
+    WHERE w.user_id = ?
+  `;
 
-      wrongList.forEach(qid => {
-        db.run(insertSql, [user_id, qid]);
-      });
-    }
+  db.all(sql, [userId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
 
-    log('测试得分', { score, total: answers.length, wrongList });
-
-    res.json({ score, total: answers.length, wrongList });
+    const formatted = rows.map(q => ({ ...q, options: JSON.parse(q.options) }));
+    res.json(formatted);
   });
 });
 
-// ================= 服务器启动 =================
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+// ===== 随机抽题 =====
+app.get('/api/test', (req, res) => {
+  const num = parseInt(req.query.num) || 5;
+  db.all(`SELECT * FROM questions ORDER BY RANDOM() LIMIT ?`, [num], (err, rows) => {
+    if (err) return res.status(500).json({ error: '获取测试题失败' });
+    const formatted = rows.map(q => ({ ...q, options: JSON.parse(q.options) }));
+    res.json(formatted);
+  });
 });
+
+// ===== 提交测试结果 =====
+app.post('/api/test/submit', (req, res) => {
+  const { user_id, answers } = req.body;
+  if (!user_id || !answers) return res.status(400).json({ error: '缺少用户或答案数据' });
+
+  const ids = Object.keys(answers);
+  if (ids.length === 0) return res.status(400).json({ error: '没有答案' });
+
+  let score = 0;
+  const wrongQuestions = [];
+  const insertAnswer = db.prepare(`INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)`);
+
+  ids.forEach(id => {
+    const selected = answers[id];
+    db.get(`SELECT answer FROM questions WHERE id = ?`, [id], (err, row) => {
+      if (!err && row) {
+        const is_correct = selected === row.answer;
+        if (!is_correct) wrongQuestions.push(id);
+        if (is_correct) score += 1;
+
+        insertAnswer.run([user_id, id, is_correct ? 1 : 0]);
+
+        if (!is_correct) {
+          db.run(`INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`, [user_id, id]);
+        } else {
+          db.run(`DELETE FROM wrong_questions WHERE user_id = ? AND question_id = ?`, [user_id, id]);
+        }
+      }
+    });
+  });
+
+  insertAnswer.finalize();
+
+  res.json({
+    message: '测试提交成功',
+    total: ids.length,
+    score,
+    wrongQuestions
+  });
+});
+
+// ===== 登录 =====
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: '用户名或密码不能为空' });
+
+  db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, user) => {
+    if (err) return res.status(500).json({ error: '数据库查询错误' });
+    if (!user) return res.status(401).json({ error: '用户名或密码错误' });
+    res.json({ id: user.id, username: user.username, role: user.role });
+  });
+});
+
+// ===== 微信登录 =====
+app.post('/api/wxlogin', async (req, res) => {
+  const { code } = req.body;
+  try {
+    const sessionData = await getSessionFromWeixin(code);
+    const openid = sessionData.openid;
+    if (!openid) return res.status(400).json({ error: '获取openid失败' });
+
+    db.get('SELECT * FROM users WHERE openid = ?', [openid], (err, user) => {
+      if (err) return res.status(500).json({ error: '数据库查询错误' });
+
+      if (user) return res.json(user);
+
+      const username = `游客_${Date.now()}`;
+      const role = 'student';
+      db.run('INSERT INTO users (username, role, openid) VALUES (?, ?, ?)', [username, role, openid], function(err) {
+        if (err) return res.status(500).json({ error: '注册游客失败' });
+        db.get('SELECT * FROM users WHERE id = ?', [this.lastID], (err2, newUser) => {
+          if (err2) return res.status(500).json({ error: '查询新用户失败' });
+          res.json(newUser);
+        });
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// ===== 教师查看学生答题统计 =====
+app.get('/api/user-stats', (req, res) => {
+  const { role } = req.query;
+  if (role !== 'teacher') return res.status(403).json({ error: '无权限访问' });
+
+  const sql = `
+    SELECT u.username,
+           COUNT(a.id) AS total,
+           SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct,
+           ROUND(100.0 * SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) / COUNT(a.id), 1) AS accuracy
+    FROM users u
+    LEFT JOIN answer_records a ON a.user_id = u.username
+    WHERE u.role = 'student'
+    GROUP BY u.username
+  `;
+  db.all(sql, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: '数据库查询错误' });
+    res.json(rows);
+  });
+});
+
+// ===== 预习模块接口（保持原路径） =====
+app.get('/preview/chapters', (req, res) => {
+  db.all(`SELECT id, title FROM chapters ORDER BY id`, (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.get('/preview/content', (req, res) => {
+  const chapterId = parseInt(req.query.chapterId);
+  if (!chapterId) return res.status(400).json({ error: '缺少章节ID' });
+
+  db.all(
+    `SELECT page_index, html FROM chapter_content WHERE chapter_id = ? ORDER BY page_index`,
+    [chapterId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      const contentPages = rows.map(p => p.html);
+
+      db.get(`SELECT id, title FROM chapters WHERE id = ?`, [chapterId], (err2, chapter) => {
+        if (err2) return res.status(500).json({ error: err2.message });
+        res.json({ chapterInfo: chapter, contentPages });
+      });
+    }
+  );
+});
+
+app.get('/preview/quiz', (req, res) => {
+  const chapterId = parseInt(req.query.chapterId);
+  if (!chapterId) return res.status(400).json({ error: '缺少章节ID' });
+
+  db.all(`SELECT id, question, answer FROM chapter_quiz WHERE chapter_id = ?`, [chapterId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/preview/quiz/submit', (req, res) => {
+  const { userId, quizId, userAnswer } = req.body;
+  if (!quizId) return res.status(400).json({ error: '缺少quizId' });
+
+  db.run(
+    `INSERT INTO quiz_record (user_id, quiz_id, user_answer) VALUES (?, ?, ?)`,
+    [userId || 'guest', quizId, userAnswer ? 1 : 0],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true, recordId: this.lastID });
+    }
+  );
+});
+
+// ===== 微信接口 =====
+async function getSessionFromWeixin(code) {
+  const appid = 'wx152d55febb831e42';
+  const secret = 'c1638bc056f33cb02c19b75a85198975';
+  const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
+
+  try {
+    const resp = await axios.get(url);
+    if (resp.data.errcode) throw new Error(`微信接口返回错误: ${resp.data.errmsg}`);
+    return resp.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+// ===== 启动服务 =====
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
