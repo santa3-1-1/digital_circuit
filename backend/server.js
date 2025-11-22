@@ -166,45 +166,63 @@ app.get('/api/test', (req, res) => {
 });
 
 // ===== 提交测试结果 =====
-app.post('/api/test/submit', (req, res) => {
+app.post('/api/test/submit', async (req, res) => {
   const { user_id, answers } = req.body;
   if (!user_id || !answers) return res.status(400).json({ error: '缺少用户或答案数据' });
 
   const ids = Object.keys(answers);
+  if (ids.length === 0) return res.status(400).json({ error: '没有答案' });
+
   let score = 0;
   const wrongQuestions = [];
 
-  const insertAnswer = db.prepare(`INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)`);
+  const insertAnswer = db.prepare(`
+    INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)
+  `);
 
-  ids.forEach(id => {
+  // 用 Promise 处理每道题
+  const tasks = ids.map(id => {
     const selected = answers[id];
-    db.get(`SELECT answer FROM questions WHERE id = ?`, [id], (err, row) => {
-      if (row) {
-        const is_correct = selected === row.answer;
+    return new Promise((resolve, reject) => {
+      db.get(`SELECT answer FROM questions WHERE id = ?`, [id], (err, row) => {
+        if (err) return reject(err);
+        if (!row) return resolve(); // 题目不存在就跳过
+
+        const is_correct = String(selected) === String(row.answer);
         if (!is_correct) wrongQuestions.push(id);
         if (is_correct) score += 1;
 
-        insertAnswer.run([user_id, id, is_correct ? 1 : 0]);
+        // 保存答题记录
+        insertAnswer.run([user_id, id, is_correct ? 1 : 0], (err2) => {
+          if (err2) console.error('保存答题记录失败', err2);
+        });
 
+        // 错题处理
         if (!is_correct) {
           db.run(`INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`, [user_id, id]);
         } else {
           db.run(`DELETE FROM wrong_questions WHERE user_id = ? AND question_id = ?`, [user_id, id]);
         }
-      }
+
+        resolve();
+      });
     });
   });
 
-  insertAnswer.finalize();
+  try {
+    await Promise.all(tasks);
+    insertAnswer.finalize();
 
-  res.json({
-    message: '测试提交成功',
-    total: ids.length,
-    score,
-    wrongQuestions
-  });
+    res.json({
+      message: '测试提交成功',
+      total: ids.length,
+      score,
+      wrongQuestions // 返回错题 id 数组
+    });
+  } catch (err) {
+    res.status(500).json({ error: '提交失败', detail: err.message });
+  }
 });
-
 // ===== 登录 =====
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
