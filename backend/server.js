@@ -1,18 +1,27 @@
-const express = require('express');
-const cors = require('cors');
-const db = require('./database'); // 使用现有 database.js
-const axios = require('axios');
+// ===== 引入依赖模块 =====
+const express = require('express');  // Express 框架，用于搭建后端 API
+const cors = require('cors');        // 跨域请求中间件
+const db = require('./database');    // 自己写的 database.js，用于操作 SQLite 数据库
+const axios = require('axios');      // 用于请求外部接口（这里用于微信登录）
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+
+// ===== 中间件 =====
+app.use(cors());                     // 允许跨域请求
+app.use(express.json());             // 支持解析 JSON 请求体
 
 // ===== 根路由测试服务 =====
+// GET /
+// 用于测试服务器是否正常启动
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'Server is live' });
 });
 
-// ===== 练习模块：获取所有题目 =====
+// ===== 练习模块 =====
+
+// GET /api/questions
+// 获取所有题目（带选项解析 JSON）
+// 返回格式：[{id, title, options: [], answer, explanation}]
 app.get('/api/questions', (req, res) => {
   db.all("SELECT * FROM questions", (err, rows) => {
     if (err) return res.status(500).json({ error: "数据库查询错误" });
@@ -21,7 +30,10 @@ app.get('/api/questions', (req, res) => {
   });
 });
 
-// ===== 提交答题结果 =====
+// POST /api/submit
+// 用户提交单题答案
+// body: { user_id, question_id, is_correct }
+// 同时处理错题记录和删除已纠正的错题
 app.post('/api/submit', (req, res) => {
   let { user_id, question_id, is_correct } = req.body;
 
@@ -30,6 +42,7 @@ app.post('/api/submit', (req, res) => {
 
   user_id = String(user_id);
 
+  // 插入答题记录
   db.run(
     `INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)`,
     [user_id, question_id, is_correct ? 1 : 0],
@@ -38,6 +51,7 @@ app.post('/api/submit', (req, res) => {
 
       // 错题处理
       if (!is_correct) {
+        // 如果答错，加入错题表
         db.run(
           `INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`,
           [user_id, question_id],
@@ -46,6 +60,7 @@ app.post('/api/submit', (req, res) => {
           }
         );
       } else {
+        // 如果答对，从错题表删除
         db.run(
           `DELETE FROM wrong_questions WHERE user_id = ? AND question_id = ?`,
           [user_id, question_id],
@@ -60,7 +75,9 @@ app.post('/api/submit', (req, res) => {
   );
 });
 
-// ===== 收藏题目 =====
+// POST /api/favorite
+// 收藏题目
+// body: { user_id, question_id }
 app.post('/api/favorite', (req, res) => {
   const { user_id, question_id } = req.body;
   if (!question_id) return res.status(400).json({ error: '缺少题目ID' });
@@ -77,7 +94,9 @@ app.post('/api/favorite', (req, res) => {
   );
 });
 
-// ===== 获取收藏题目 =====
+// GET /api/favorite
+// 获取用户收藏题目
+// query: user_id
 app.get('/api/favorite', (req, res) => {
   const user_id = String(req.query.user_id || 'guest');
 
@@ -95,7 +114,9 @@ app.get('/api/favorite', (req, res) => {
   );
 });
 
-// ===== 获取单题（按 index，不用 chapterId） =====
+// GET /api/question
+// 按索引获取单题（不按章节）
+// query: index
 app.get('/api/question', (req, res) => {
   const index = parseInt(req.query.index) || 0;
 
@@ -120,7 +141,9 @@ app.get('/api/question', (req, res) => {
   });
 });
 
-// ===== 题目解析接口 =====
+// GET /api/explanation
+// 获取题目解析
+// query: id (题目ID)
 app.get('/api/explanation', (req, res) => {
   const questionId = req.query.id;
   if (!questionId) return res.status(400).json({ error: '缺少题目ID' });
@@ -136,7 +159,9 @@ app.get('/api/explanation', (req, res) => {
   );
 });
 
-// ===== 错题查询 =====
+// GET /api/wrongs
+// 获取用户错题
+// query: user_id
 app.get(['/api/wrongs', '/api/wrongs-old'], (req, res) => {
   const userId = String(req.query.user_id || 'guest');
 
@@ -155,7 +180,9 @@ app.get(['/api/wrongs', '/api/wrongs-old'], (req, res) => {
   });
 });
 
-// ===== 随机抽题 =====
+// GET /api/test
+// 随机抽题（用于测试）
+// query: num (题目数量，默认5)
 app.get('/api/test', (req, res) => {
   const num = parseInt(req.query.num) || 5;
   db.all(`SELECT * FROM questions ORDER BY RANDOM() LIMIT ?`, [num], (err, rows) => {
@@ -165,7 +192,9 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// ===== 提交测试结果 =====
+// POST /api/test/submit
+// 提交测试结果（批量答题）
+// body: { user_id, answers: { question_id: selected_option } }
 app.post('/api/test/submit', async (req, res) => {
   const { user_id, answers } = req.body;
   if (!user_id || !answers) return res.status(400).json({ error: '缺少用户或答案数据' });
@@ -175,29 +204,25 @@ app.post('/api/test/submit', async (req, res) => {
 
   let score = 0;
   const wrongQuestions = [];
-
   const insertAnswer = db.prepare(`
     INSERT INTO answer_records (user_id, question_id, is_correct) VALUES (?, ?, ?)
   `);
 
-  // 用 Promise 处理每道题
   const tasks = ids.map(id => {
     const selected = answers[id];
     return new Promise((resolve, reject) => {
       db.get(`SELECT answer FROM questions WHERE id = ?`, [id], (err, row) => {
         if (err) return reject(err);
-        if (!row) return resolve(); // 题目不存在就跳过
+        if (!row) return resolve();
 
         const is_correct = String(selected) === String(row.answer);
         if (!is_correct) wrongQuestions.push(id);
         if (is_correct) score += 1;
 
-        // 保存答题记录
         insertAnswer.run([user_id, id, is_correct ? 1 : 0], (err2) => {
           if (err2) console.error('保存答题记录失败', err2);
         });
 
-        // 错题处理
         if (!is_correct) {
           db.run(`INSERT OR IGNORE INTO wrong_questions (user_id, question_id) VALUES (?, ?)`, [user_id, id]);
         } else {
@@ -212,18 +237,15 @@ app.post('/api/test/submit', async (req, res) => {
   try {
     await Promise.all(tasks);
     insertAnswer.finalize();
-
-    res.json({
-      message: '测试提交成功',
-      total: ids.length,
-      score,
-      wrongQuestions // 返回错题 id 数组
-    });
+    res.json({ message: '测试提交成功', total: ids.length, score, wrongQuestions });
   } catch (err) {
     res.status(500).json({ error: '提交失败', detail: err.message });
   }
 });
-// ===== 登录 =====
+
+// POST /api/login
+// 用户名密码登录
+// body: { username, password }
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: '用户名或密码不能为空' });
@@ -235,7 +257,9 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// ===== 微信登录 =====
+// POST /api/wxlogin
+// 微信登录（根据 code 获取 openid）
+// body: { code }
 app.post('/api/wxlogin', async (req, res) => {
   const { code } = req.body;
   try {
@@ -259,7 +283,9 @@ app.post('/api/wxlogin', async (req, res) => {
   }
 });
 
-// ===== 教师查看学生答题统计 =====
+// GET /api/user-stats
+// 教师查看学生答题统计
+// query: role=teacher
 app.get(['/api/user-stats', '/api/stats'], (req, res) => {
   const { role } = req.query;
   if (role !== 'teacher') return res.status(403).json({ error: '无权限访问' });
@@ -280,10 +306,14 @@ app.get(['/api/user-stats', '/api/stats'], (req, res) => {
 });
 
 // ===== 预习模块 =====
+
+// 获取章节列表
 app.get('/preview/chapters', (req, res) => {
   db.all(`SELECT id, title FROM chapters ORDER BY id`, (err, rows) => res.json(rows));
 });
 
+// 获取章节内容
+// query: chapterId
 app.get('/preview/content', (req, res) => {
   const chapterId = parseInt(req.query.chapterId);
   if (!chapterId) return res.json({ chapterInfo: null, contentPages: [] });
@@ -300,6 +330,7 @@ app.get('/preview/content', (req, res) => {
   );
 });
 
+// 获取章节小测
 app.get('/preview/quiz', (req, res) => {
   const chapterId = parseInt(req.query.chapterId);
   if (!chapterId) return res.json([]);
@@ -308,6 +339,8 @@ app.get('/preview/quiz', (req, res) => {
   });
 });
 
+// 提交章节小测答案
+// body: { userId, quizId, userAnswer }
 app.post('/preview/quiz/submit', (req, res) => {
   const { userId, quizId, userAnswer } = req.body;
   db.run(
@@ -317,7 +350,7 @@ app.post('/preview/quiz/submit', (req, res) => {
   );
 });
 
-// ===== 微信接口 =====
+// ===== 微信接口工具函数 =====
 async function getSessionFromWeixin(code) {
   const appid = 'wx152d55febb831e42';
   const secret = 'c1638bc056f33cb02c19b75a85198975';
