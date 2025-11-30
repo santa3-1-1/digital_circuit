@@ -1,0 +1,43 @@
+<view class="container">
+  <!-- 分数 -->
+  <view class="score">
+    得分：{{score}} / {{total}}
+  </view>
+
+  <!-- 有题目 -->
+  <view wx:if="{{questions.length > 0}}" class="question-card">
+    <view class="question-number">
+      第 {{questions[currentIndex].questionNumber}} 题 / 共 {{questions.length}} 题
+    </view>
+    <view class="question-title">{{questions[currentIndex].title || questions[currentIndex].question}}</view>
+    <view class="question-options">
+      <block wx:for="{{questions[currentIndex].options}}" wx:key="index">
+        <view class="option">{{item}}</view>
+      </block>
+    </view>
+    <view class="question-answer">
+      正确答案：{{questions[currentIndex].answer}}
+    </view>
+    <view class="question-explanation">
+      解析：{{questions[currentIndex].explanation}}
+    </view>
+
+    <!-- 始终显示上下题 + 收藏 -->
+    <view class="actions">
+      <button bindtap="prevQuestion" wx:if="{{currentIndex > 0}}">上一题</button>
+      <button bindtap="nextQuestion" wx:if="{{currentIndex < questions.length - 1}}">下一题</button>
+      <button bindtap="toggleFavorite">收藏</button>
+    </view>
+  </view>
+
+  <!-- 已交卷操作，独立显示 -->
+  <view wx:if="{{submitted}}" class="submitted-actions" style="margin-top: 20rpx;">
+    <button bindtap="exitTest">退出</button>
+    <button bindtap="redoTest">重做</button>
+  </view>
+
+  <!-- 没有题目 -->
+  <view wx:if="{{questions.length === 0}}" class="no-question">
+    暂无错题
+  </view>
+</view>

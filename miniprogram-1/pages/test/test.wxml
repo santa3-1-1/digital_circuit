@@ -1,0 +1,36 @@
+<view class="page">
+  <!-- 开始页面 -->
+  <block wx:if="{{stage=='start'}}">
+    <view class="start-container">
+      <text class="title">🕒 模拟测试</text>
+      <text class="desc">本次测试共 {{questions.length}} 道题，限时 15 分钟</text>
+      <button class="start-btn" bindtap="startTest">开始测试</button>
+    </view>
+  </block>
+
+  <!-- 测试页面 -->
+  <block wx:elif="{{stage=='testing'}}">
+    <text class="timer">剩余时间：{{timeLeft}} 秒</text>
+    <text class="question">{{questions[currentIndex].question}}</text>
+    <view class="options">
+      <block wx:for="{{questions[currentIndex].options}}" wx:key="*this">
+        <button class="option-btn" bindtap="selectOption" data-option="{{item}}">
+          {{item}}
+        </button>
+      </block>
+    </view>
+
+    <view class="nav-btns">
+      <button bindtap="prevQuestion">上一题</button>
+      <button bindtap="nextQuestion">下一题</button>
+      <button bindtap="submitTest">交卷</button>
+    </view>
+  </block>
+
+  <!-- 测试完成 -->
+  <block wx:elif="{{stage=='finished'}}">
+    <text class="result">🎯 得分：{{score}} / {{questions.length}}</text>
+    <button bindtap="goWrongExplain" wx:if="{{wrongQuestions.length}}">查看错题解析</button>
+    <button bindtap="restartTest">再做一次</button>
+  </block>
+</view>

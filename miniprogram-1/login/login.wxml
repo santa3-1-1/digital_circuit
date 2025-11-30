@@ -1,0 +1,56 @@
+<view class="container">
+
+<!-- 标题 -->
+<view class="title">数字电路学习系统</view>
+
+<!-- 角色切换 -->
+<view class="role-switch">
+  <view 
+    class="role-item {{role === 'student' ? 'active' : ''}}" 
+    data-role="student" 
+    bindtap="onSelectRole">
+    学生
+  </view>
+
+  <view 
+    class="role-item {{role === 'teacher' ? 'active' : ''}}" 
+    data-role="teacher" 
+    bindtap="onSelectRole">
+    教师
+  </view>
+</view>
+
+<!-- 输入框区域（从 form 独立出来） -->
+<view class="inputs">
+  <input class="input"
+         placeholder="请输入账号"
+         data-field="username"
+         bindinput="onInput" />
+
+  <input class="input"
+         placeholder="请输入密码"
+         password
+         data-field="password"
+         bindinput="onInput" />
+
+  <text class="error">{{errorMsg}}</text>
+</view>
+
+<!-- 登录按钮区域 -->
+<view class="buttons">
+  <button class="btn-login" bindtap="login" loading="{{loading}}">
+    账号密码登录
+  </button>
+
+  <view class="or-line">
+    <view class="line"></view>
+    <text class="or-text">或</text>
+    <view class="line"></view>
+  </view>
+
+  <button class="btn-wx" bindtap="wxLogin">
+    微信快捷登录
+  </button>
+</view>
+
+</view>

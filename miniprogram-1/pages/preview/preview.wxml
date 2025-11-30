@@ -1,0 +1,57 @@
+<view class="container">
+  <!-- 左侧章节栏 -->
+  <view class="sidebar">
+    <view class="sidebar-title">章节目录</view>
+    <scroll-view scroll-y class="chapter-list">
+      <view 
+        class="chapter-item {{ currentChapterId === item.id ? 'active' : '' }}"
+        wx:for="{{ chapters }}"
+        wx:key="id"
+        data-id="{{ item.id }}"
+        bindtap="onSelectChapter"
+      >
+        {{ item.title }}
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 右侧内容主区 -->
+  <view class="right-area">
+    <!-- 内容展示区 -->
+    <view class="content-area">
+      <view class="content-header">
+        <text class="chapter-name">{{ currentChapter.title }}</text>
+        <text class="progress-text">第 {{ currentPage + 1 }} 页 / {{ totalPages }} 页</text>
+      </view>
+
+      <scroll-view scroll-y class="content-body">
+        <rich-text nodes="{{ contentPages[currentPage] }}"></rich-text>
+      </scroll-view>
+
+      <view class="content-pagination">
+        <button class="pagination-btn" size="mini" bindtap="prevContentPage" disabled="{{currentPage === 0}}">上一页</button>
+        <button class="pagination-btn" size="mini" bindtap="nextContentPage" disabled="{{currentPage === totalPages - 1}}">下一页</button>
+      </view>
+    </view>
+
+    <!-- 小测区 -->
+    <view class="quiz-area">
+      <view class="quiz-title">本章预习小测</view>
+
+      <view class="quiz-question">
+        <text>{{ quizList[currentQuizIndex].question }}</text>
+      </view>
+
+      <view class="quiz-options">
+        <button class="judge-btn correct-btn" data-value="true" bindtap="onAnswer">正确</button>
+        <button class="judge-btn wrong-btn" data-value="false" bindtap="onAnswer">错误</button>
+      </view>
+
+      <view class="quiz-pagination">
+        <button class="pagination-btn" size="mini" bindtap="prevQuiz" disabled="{{currentQuizIndex === 0}}">上一题</button>
+        <text class="quiz-progress">{{ currentQuizIndex + 1 }} / {{ quizList.length }}</text>
+        <button class="pagination-btn" size="mini" bindtap="nextQuiz" disabled="{{currentQuizIndex === quizList.length - 1}}">下一题</button>
+      </view>
+    </view>
+  </view>
+</view>

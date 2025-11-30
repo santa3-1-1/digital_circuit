@@ -1,0 +1,105 @@
+/* 整体容器，垂直居中，内缩 */
+.container {
+  padding: 20rpx;
+  background-color: #fff7e6;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* 顶部开始排列，避免内容全部挤在下方 */
+  align-items: center;
+}
+
+/* 分数显示，居中 */
+.score {
+  font-size: 32rpx;
+  color: #ff9900;
+  text-align: center;
+  margin: 20rpx 0;
+}
+
+/* 题目卡片 */
+.question-card {
+  background-color: #fff3e0;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+  width: 90%;
+  max-width: 700rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* 上下间距由内容撑开 */
+  min-height: 50vh;
+}
+
+/* 题号 */
+.question-number {
+  font-size: 28rpx;
+  color: #ff6600;
+  margin-bottom: 10rpx;
+}
+
+/* 题目标题 */
+.question-title {
+  font-size: 28rpx;
+  line-height: 1.5;
+  margin-bottom: 15rpx;
+  word-wrap: break-word;
+}
+
+/* 选项 */
+.question-options {
+  margin-bottom: 15rpx;
+}
+
+.option {
+  background-color: #ffe0b2;
+  padding: 10rpx;
+  border-radius: 8rpx;
+  margin-bottom: 8rpx;
+  font-size: 28rpx;
+  word-wrap: break-word;
+}
+
+/* 正确答案 */
+.question-answer {
+  font-size: 28rpx;
+  color: #ff6600;
+  margin-bottom: 10rpx;
+}
+
+/* 解析 */
+.question-explanation {
+  font-size: 26rpx;
+  line-height: 1.5;
+  margin-bottom: 15rpx;
+  color: #333;
+}
+
+/* 操作按钮，固定在卡片底部 */
+.actions, .submitted-actions {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: auto; /* 自动推到卡片底部 */
+}
+
+/* 按钮样式 */
+.actions button, .submitted-actions button {
+  flex: 1;
+  min-width: 120rpx;
+  height: 60rpx;
+  background-color: #ff9900;
+  color: #fff;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+}
+
+/* 暂无题目 */
+.no-question {
+  font-size: 28rpx;
+  text-align: center;
+  color: #999;
+  margin-top: 50rpx;
+}

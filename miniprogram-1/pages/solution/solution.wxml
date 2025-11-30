@@ -1,0 +1,31 @@
+<view class="container">
+
+<text class="title">题目解析</text>
+
+<view class="question-block">
+  <view class="question">{{question.title}}</view>
+
+  <view class="section">
+    <view class="label">正确答案：</view>
+    <view class="answer">{{question.answer}}</view>
+  </view>
+
+  <view class="section">
+    <view class="label">解析：</view>
+    <view class="explanation">
+      <rich-text nodes="{{question.explanation}}"></rich-text>
+    </view>
+  </view>
+</view>
+
+
+<!-- 收藏 & 返回按钮 -->
+<view class="bottom-buttons">
+  <button class="btn-secondary {{ isFavorite ? 'btn-fav' : '' }}" bindtap="onToggleFavorite">
+    {{ isFavorite ? '已收藏' : '收藏' }}
+  </button>
+
+  <button class="back-btn" bindtap="goBack">返回练习</button>
+</view>
+
+</view>

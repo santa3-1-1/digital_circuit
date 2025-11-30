@@ -1,0 +1,69 @@
+<view class="container">
+
+<!-- 题目序号 -->
+<view class="progress">
+  第 {{ currentIndex + 1 }} 题 / {{ total }}
+</view>
+
+<!-- 题干主体 -->
+<view class="question">
+  {{ question.question }}  <!-- 改成 question.question -->
+</view>
+
+
+<!-- 选项 -->
+<view class="options">
+  <block wx:for="{{ question.options }}" wx:key="i">
+    <view 
+      class="option {{ selected === item ? 'option-selected' : '' }}"
+      data-option="{{ item }}"
+      bindtap="onSelectOption"
+    >
+      {{ item }}
+    </view>
+  </block>
+</view>
+
+<!-- 解析模块 -->
+<view wx:if="{{ showExplain }}" class="explain-box">
+  <view class="explain-title">解析</view>
+  <view class="explain-text">{{ question.explanation }}</view>
+</view>
+
+<!-- 底部按钮 -->
+<view class="bottom-buttons">
+
+  <!-- 上一题 -->
+  <button class="btn-secondary" bindtap="onPrev">上一题</button>
+
+  <button bindtap="goExplain" class="btn-secondary">解析</button>
+
+  <!-- 收藏 -->
+  <button 
+    class="btn-secondary {{ isFavorite ? 'btn-fav' : '' }}"
+    bindtap="onToggleFavorite"
+  >
+    {{ isFavorite ? '已收藏' : '收藏' }}
+  </button>
+
+  <!-- 下一题 -->
+  <button 
+    class="btn-primary"
+    disabled="{{ !showExplain }}"
+    bindtap="onNext"
+  >
+    下一题
+  </button>
+
+  <!-- 提交 -->
+  <button 
+    wx:if="{{ !showExplain }}"
+    class="btn-primary"
+    bindtap="onSubmit"
+  >
+    提交
+  </button>
+
+</view>
+
+</view>

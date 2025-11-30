@@ -1,0 +1,75 @@
+.page {
+  padding: 20rpx;
+  background: #fff8f0;
+}
+
+/* ====== 开始页面样式 ====== */
+.start-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 垂直居中 */
+  align-items: center;
+  height: 50vh;            /* 给页面留空白 */
+  text-align: center;
+  gap: 20rpx;              /* 标题、说明、按钮间距 */
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ff7f00;
+}
+
+.desc {
+  font-size: 28rpx;
+  color: #ff9900;
+}
+
+.start-btn {
+  background-color: #ff9900;
+  color: #fff;
+  border-radius: 12rpx;
+  padding: 18rpx 40rpx;
+  font-size: 28rpx;
+}
+
+/* ====== 测试页面样式 ====== */
+.timer {
+  font-size: 28rpx;
+  color: #ffa500;
+  margin-bottom: 10rpx;
+}
+
+.question {
+  font-size: 28rpx;
+  color: #ff6600;
+  margin: 15rpx 0;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  margin-bottom: 20rpx;
+}
+
+.option-btn {
+  background-color: #ffd580;
+  color: #663300;
+  border-radius: 8rpx;
+  padding: 10rpx;
+  font-size: 26rpx;
+}
+
+.nav-btns {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20rpx;
+}
+
+/* ====== 完成页面样式 ====== */
+.result {
+  font-size: 30rpx;
+  color: #ff6600;
+  margin-bottom: 20rpx;
+}

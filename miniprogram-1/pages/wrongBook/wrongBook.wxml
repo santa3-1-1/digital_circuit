@@ -1,0 +1,37 @@
+<view class="container">
+<!-- 顶部切换栏 -->
+<view class="tab">
+  <button data-type="wrong" bindtap="switchType" class="tab-btn {{ type==='wrong' ? 'tab-active' : '' }}">错题</button>
+  <button data-type="favorite" bindtap="switchType" class="tab-btn {{ type==='favorite' ? 'tab-active' : '' }}">收藏</button>
+</view>
+
+
+<!-- 题目展示 -->
+<view class="question-box" wx:if="{{questions.length}}">
+  <text>题目 {{currentIndex + 1}} / {{questions.length}}</text>
+  <text class="title">{{questions[currentIndex].question}}</text>
+
+  <!-- 单选选项 -->
+  <radio-group bindchange="onSelectOption" value="{{selected}}">
+    <block wx:for="{{questions[currentIndex].options}}" wx:key="index">
+      <radio value="{{item}}">{{item}}</radio>
+    </block>
+  </radio-group>
+
+</view>
+
+<view wx:else>
+  <text>暂无题目</text>
+</view>
+
+
+  <!-- 底部操作按钮 -->
+  <view class="bottom-buttons">
+    <button class="btn-secondary {{ selectedAction === 'redo' ? 'btn-active' : '' }}" bindtap="redoQuestion">重做</button>
+    <button class="btn-secondary" bindtap="viewExplanation">解析</button>
+    <button class="btn-secondary {{ selectedAction === 'favorite' ? 'btn-active' : '' }}" bindtap="toggleFavorite">
+      收藏/取消
+    </button>
+    <button class="btn-primary" bindtap="nextQuestion">下一题</button>
+  </view>
+</view>

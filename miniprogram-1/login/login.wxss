@@ -1,0 +1,115 @@
+/* 背景 */
+.container {
+  padding: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fffdf7;
+  height: 100vh;
+}
+
+/* 标题 */
+.title {
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #ff8c00;
+  margin-top: 80rpx;
+  margin-bottom: 60rpx;
+}
+
+/* 角色切换 */
+.role-switch {
+  display: flex;
+  width: 70%;
+  justify-content: space-around;
+  margin-bottom: 40rpx;
+}
+
+.role-item {
+  padding: 16rpx 40rpx;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  color: #ff9800;
+  border: 2rpx solid #ffb74d;
+}
+
+.active {
+  background-color: #ffb74d;
+  color: #fff;
+  border-color: #ffa726;
+}
+
+/* 输入框区域 */
+.inputs {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 40rpx;
+}
+
+/* 输入框 */
+.input {
+  margin: 16rpx 0;
+  padding: 26rpx;
+  border: 2rpx solid #ffd28a;
+  border-radius: 14rpx;
+  font-size: 28rpx;
+  background: #fffaf3;
+}
+
+/* 错误提示 */
+.error {
+  color: #e53935;
+  font-size: 26rpx;
+  margin-top: 10rpx;
+}
+
+/* 按钮区域 */
+.buttons {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 登录按钮 */
+.btn-login {
+  padding: 28rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, #ffb04c, #ff9100);
+  color: white;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 6rpx 14rpx rgba(255, 152, 0, 0.25);
+  margin-bottom: 40rpx;
+}
+
+/* 中间分割线 */
+.or-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.line {
+  width: 30%;
+  height: 2rpx;
+  background-color: #ffd28a;
+}
+
+.or-text {
+  margin: 0 20rpx;
+  color: #ff9800;
+  font-size: 26rpx;
+}
+
+/* 微信登录按钮 */
+.btn-wx {
+  padding: 28rpx;
+  border-radius: 16rpx;
+  background: #ffca28;
+  color: #5d4200;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 6rpx 14rpx rgba(255, 193, 7, 0.25);
+}

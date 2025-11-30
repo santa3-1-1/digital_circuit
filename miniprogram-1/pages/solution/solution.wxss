@@ -1,0 +1,78 @@
+.container {
+  padding: 40rpx;
+}
+/* 段落统一竖向间距 */
+.section {
+  margin-bottom: 30rpx;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #FB8C00;
+  margin-bottom: 30rpx;
+}
+
+
+/* 整个内容段落之间加间距 */
+.question-block {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx; /* ⭐ 最关键：让各段自动有间距 */
+}
+/* 问题标题保持你原来的大小，但确保段落独立 */
+.question {
+  display: block;
+  margin-bottom: 30rpx;
+  line-height: 1.6;
+}
+
+.label {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #e65100;
+}
+
+/* 正确答案单独占一行 */
+.answer {
+  margin-top: 10rpx;
+  margin-bottom: 20rpx;
+  display: block;
+  line-height: 1.6;
+}
+
+rich-text {
+  font-size: 30rpx;
+}
+
+.bottom-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30rpx;
+}
+
+.back-btn, .btn-secondary {
+  padding: 20rpx 40rpx;
+  border-radius: 16rpx;
+  color: white;
+}
+
+.back-btn {
+  background: #ffa726;
+}
+
+.btn-secondary {
+  background: #ffd37a;
+  color: #8a5500;
+}
+
+.btn-fav {
+  background: #ffb14a;
+  color: white;
+}
+
+/* 解析富文本段落 */
+.explanation rich-text {
+  display: block;
+  margin-top: 10rpx;
+  line-height: 1.8; /* 提升可读性 */
+}

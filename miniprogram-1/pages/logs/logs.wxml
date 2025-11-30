@@ -1,0 +1,11 @@
+<scroll-view class="scrollarea" scroll-y type="list">
+  <!-- 空日志提示 -->
+  <view wx:if="{{logs.length == 0}}">暂无日志记录</view>
+
+  <!-- 日志列表 -->
+  <view wx:else>
+    <block wx:for="{{logs}}" wx:key="timeStamp" wx:for-item="log">
+      <view class="log-item">{{index + 1}}. {{log.date}}</view>
+    </block>
+  </view>
+</scroll-view>

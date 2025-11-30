@@ -1,0 +1,238 @@
+/* 整体容器：左右结构 */
+.container {
+  display: flex;
+  height: 100vh;
+  background-color: #fff;
+  padding-left: 240rpx; /* 关键：为左侧栏留出空间 */
+}
+
+/* 左侧栏 - 固定在左边 */
+.sidebar {
+  width: 160rpx;
+  background: #fff8e1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-right: 2rpx solid #ffb74d;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-title {
+  padding: 30rpx 20rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  background: #ff9800;
+  color: white;
+  text-align: center;
+  border-bottom: 1rpx solid #ffb74d;
+}
+
+.chapter-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chapter-item {
+  padding: 24rpx 20rpx;
+  border-bottom: 1rpx solid #ffe0b2;
+  font-size: 28rpx;
+  color: #5d4037;
+  transition: all 0.3s;
+}
+
+.chapter-item.active {
+  background: #ffecb3;
+  border-left: 8rpx solid #ff9800;
+  font-weight: bold;
+  color: #e65100;
+}
+
+/* 右侧整体：上下分布 */
+.right-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  height: 100vh;
+  /* 移除 margin-left，现在由容器处理 */
+}
+
+/* 内容区（70%） */
+.content-area {
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  padding: 100rpx;
+  background: #fff;
+  border-bottom: 2rpx solid #ffcc80;
+  box-sizing: border-box; /* 确保padding不会导致溢出 */
+  padding-left: 35px;
+  padding-right: 110px;
+  padding-top: 10px;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 28rpx;
+  margin-bottom: 20rpx;
+  padding: 10rpx 0;
+  border-bottom: 1rpx solid #ffcc80;
+}
+
+.chapter-name {
+  font-weight: bold;
+  color: #ff6f00;
+}
+
+.progress-text {
+  color: #ff8f00;
+  font-size: 24rpx;
+}
+
+.content-body {
+  flex: 1;
+  background: #fffaf0;
+  padding: 30rpx;
+  border-radius: 12rpx;
+  border: 1rpx solid #ffecb3;
+  margin-bottom: 20rpx;
+  overflow-y: auto; /* 确保内容可滚动 */
+}
+
+.content-pagination {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10rpx;
+  padding: 0 10rpx;
+}
+
+/* 小测区（30%） */
+.quiz-area {
+  height: 30vh;
+  padding: 20rpx;
+  background: #fffde7;
+  border-top: 2rpx solid #ffd54f;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box; /* 确保padding不会导致溢出 */
+
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.quiz-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  margin-bottom: 18rpx;
+  color: #ff8f00;
+  text-align: center;
+}
+
+.quiz-question {
+  font-size: 28rpx;
+  margin-bottom: 24rpx;
+  padding: 15rpx;
+  background: #fff9c4;
+  border-radius: 8rpx;
+  color: #5d4037;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.quiz-options {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20rpx;
+  padding: 0 20rpx;
+}
+
+.judge-btn {
+  width: 200rpx;
+  height: 70rpx;
+  border-radius: 35rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  border: none;
+}
+
+.correct-btn {
+  background: #ffb300;
+  color: white;
+}
+
+.correct-btn:active {
+  background: #ff8f00;
+}
+
+.wrong-btn {
+  background: #ffd54f;
+  color: #5d4037;
+}
+
+.wrong-btn:active {
+  background: #ffb300;
+}
+
+.quiz-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20rpx;
+}
+
+.quiz-progress {
+  font-size: 24rpx;
+  color: #ff8f00;
+}
+
+/* 通用按钮样式 */
+.pagination-btn {
+  background: #ff9800;
+  color: white;
+  border-radius: 20rpx;
+  border: none;
+}
+
+.pagination-btn[disabled] {
+  background: #ffccbc;
+  color: #8d6e63;
+}
+
+/* 底部导航栏 */
+.bottom-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 240rpx; /* 从左侧栏右边开始 */
+  right: 0;
+  height: 100rpx;
+  background: #fff;
+  border-top: 1rpx solid #eee;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+}
+
+.tab-item {
+  font-size: 24rpx;
+  color: #666;
+  padding: 20rpx;
+}
+
+.tab-item.active {
+  color: #ff9800;
+  font-weight: bold;
+}
+
+/* 确保滚动区域正常工作 */
+scroll-view {
+  height: 100%;
+}

@@ -1,0 +1,9 @@
+<view>
+  <text>成绩统计</text>
+  <view class="tabbar">
+    <button bindtap="goDashboard">首页</button>
+    <button bindtap="goStudents">学生列表</button>
+    <button bindtap="goClasses">班级</button>
+    <button bindtap="goStats">成绩统计</button>
+  </view>
+</view>

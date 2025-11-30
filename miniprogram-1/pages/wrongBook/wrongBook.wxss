@@ -1,0 +1,77 @@
+.container {
+  padding: 20rpx;
+  padding-bottom: 120rpx; /* 给底部按钮留空间 */
+}
+
+/* 顶部 tab */
+.tab {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20rpx;
+}
+
+.tab-btn {
+  flex: 1;
+  margin: 0 10rpx;
+  padding: 12rpx 0;
+  background-color: #f7dc6f; /* 默认黄色 */
+  color: #333;
+  border-radius: 10rpx;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+/* 选中高亮橙色 */
+.tab-active {
+  background-color: #f39c12; /* 橙色 */
+  color: #fff;
+}
+
+
+/* 题目区域 */
+.question-box {
+  margin-bottom: 20rpx;
+}
+
+.title {
+  font-weight: bold;
+  margin: 10rpx 0;
+}
+
+/* 底部按钮 */
+.bottom-buttons {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  padding: 10rpx 0;
+  background-color: #fff;
+  border-top: 1rpx solid #ccc;
+}
+
+.bottom-buttons button {
+  flex: 1;
+  margin: 0 5rpx;
+  padding: 12rpx 0;
+  border-radius: 10rpx;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: #f39c12; /* 橙色 */
+  color: #fff;
+}
+
+.btn-secondary {
+  background-color: #f7dc6f; /* 黄橙 */
+  color: #333;
+}
+
+/* 收藏/重做操作后高亮 */
+.btn-active {
+  background-color: #f1c40f; /* 深黄高亮 */
+  color: #fff;
+}

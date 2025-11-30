@@ -1,0 +1,52 @@
+{
+  "pages": [
+    "login/login",
+    "pages/index/index",
+    "pages/preview/preview",
+    "pages/practice/practice",
+    "pages/wrongBook/wrongBook",
+    "pages/logs/logs",
+    "pages/test/test",
+    "pages/solution/solution",
+    "pages/solution/testSolution",
+    "teacher/dashboard/dashboard",
+    "teacher/stats/stats",
+    "teacher/studentDetail/studentDetail",
+    "teacher/students/students",
+    "teacher/classes/classes"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "数字电路课程学习",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#1976d2",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/preview/preview",
+        "text": "预习"
+      },
+      {
+        "pagePath": "pages/practice/practice",
+        "text": "练习"
+      },
+      {
+        "pagePath": "pages/test/test",
+        "text": "测试"
+      },
+      {
+        "pagePath": "pages/wrongBook/wrongBook",
+        "text": "错题本"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}
